@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cek Hasil Nilai Semester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: #1e3c72;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .form-section {
+            padding: 2rem;
+        }
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 0.9rem;
+            font-size: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: border 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #2a5298;
+        }
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: #2a5298;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #1e3c72;
+        }
+        .result-box {
+            padding: 0 2rem 2rem;
+            display: none;
+        }
+        .card {
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 1.5rem;
+            background: #f9fbfd;
+        }
+        .foto-siswa {
+            width: 120px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border: 3px solid #2a5298;
+        }
+        .info-row {
+            margin: 0.7rem 0;
+            padding-bottom: 0.7rem;
+            border-bottom: 1px dashed #ddd;
+        }
+        .info-row strong {
+            display: inline-block;
+            width: 150px;
+            color: #1e3c72;
+        }
+        .nilai-badge {
+            display: inline-block;
+            background: #2a5298;
+            color: white;
+            padding: 0.3rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .error {
+            color: #dc3545;
+            padding: 1rem;
+            text-align: center;
+            display: none;
+        }
+        .loading {
+            text-align: center;
+            padding: 1rem;
+            display: none;
+            color: #2a5298;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Cek Hasil Nilai Semester</h1>
+            <p>Masukkan NISN untuk melihat data</p>
+        </div>
+
+        <div class="form-section">
+            <div class="input-group">
+                <label for="nisn">Nomor Induk Siswa Nasional (NISN)</label>
+                <input type="text" id="nisn" placeholder="Contoh: 1234567890" maxlength="20">
+            </div>
+            <button onclick="cekNilai()">Cek Hasil Nilai</button>
+            
+            <div class="loading" id="loading">🔄 Sedang mencari data...</div>
+            <div class="error" id="errorMsg">⚠️ NISN tidak ditemukan, periksa kembali nomor Anda</div>
+        </div>
+
+        <div class="result-box" id="hasil">
+            <div class="card">
+                <center>
+                    <img id="foto" src="" alt="Foto Siswa" class="foto-siswa">
+                </center>
+                <div class="info-row">
+                    <strong>NISN:</strong> <span id="vnisn"></span>
+                </div>
+                <div class="info-row">
+                    <strong>Nama Lengkap:</strong> <span id="vnama"></span>
+                </div>
+                <div class="info-row">
+                    <strong>Kelas:</strong> <span id="vkelas"></span>
+                </div>
+                <div class="info-row">
+                    <strong>Mata Pelajaran:</strong> <span id="vmapel"></span>
+                </div>
+                <div class="info-row">
+                    <strong>Nilai:</strong> <span class="nilai-badge" id="vnilai"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === GANTI BAGIAN INI DENGAN TAUTAN SKRIP ANDA ===
+        const URL_SKRIP = "https://script.google.com/macros/s/AKfycbxBHWxpKwstOjntbk5Z7rYWTKInWk0OlQWTbTbEfvvAVsyIJ1VfpXdq6mKgXnWVThX7/exec";
+
+        async function cekNilai() {
+            const nisnInput = document.getElementById('nisn').value.trim();
+            const hasilBox = document.getElementById('hasil');
+            const errorMsg = document.getElementById('errorMsg');
+            const loading = document.getElementById('loading');
+
+            // Sembunyikan semua tampilan dulu
+            hasilBox.style.display = 'none';
+            errorMsg.style.display = 'none';
+
+            if (!nisnInput) {
+                alert('Silakan masukkan NISN terlebih dahulu!');
+                return;
+            }
+
+            loading.style.display = 'block';
+
+            try {
+                const res = await fetch(URL_SKRIP);
+                const data = await res.json();
+
+                // Cari yang cocok dengan NISN
+                const siswa = data.filter(s => String(s.nisn).trim() === nisnInput);
+
+                loading.style.display = 'none';
+
+                if (siswa.length > 0) {
+                    // Ambil data pertama (atau tampilkan semua jika ada banyak)
+                    const d = siswa[0];
+                    document.getElementById('foto').src = d.foto || 'https://via.placeholder.com/120x150?text=Foto+Tidak+Ada';
+                    document.getElementById('vnisn').textContent = d.nisn;
+                    document.getElementById('vnama').textContent = d.nama;
+                    document.getElementById('vkelas').textContent = d.kelas;
+                    document.getElementById('vmapel').textContent = d.mapel;
+                    document.getElementById('vnilai').textContent = d.nilai;
+
+                    hasilBox.style.display = 'block';
+                } else {
+                    errorMsg.style.display = 'block';
+                }
+            } catch (err) {
+                loading.style.display = 'none';
+                alert('Koneksi gagal, periksa tautan skrip Anda:\n' + err.message);
+            }
+        }
+
+        // Tekan Enter untuk mencari
+        document.getElementById('nisn').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') cekNilai();
+        });
+    </script>
+</body>
+</html>
