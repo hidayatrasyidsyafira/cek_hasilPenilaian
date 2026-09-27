@@ -69,8 +69,6 @@
         }
         .loading { color: #2a5298; }
         .error { color: #dc3545; }
-
-        /* Kartu hasil (tampilan lama) */
         .result-box { padding: 0 2rem 2rem; display: none; }
         .card {
             border: 1px solid #eee;
@@ -86,6 +84,7 @@
             border-radius: 8px;
             margin-bottom: 1rem;
             border: 3px solid #2a5298;
+            background: #eef2f7;
         }
         .info-row {
             margin: 0.7rem 0;
@@ -121,8 +120,6 @@
             transition: background 0.3s;
         }
         .btn-detail:hover { background: #e09412; }
-
-        /* Tabel detail */
         .detail-section {
             display: none;
             margin-top: 1.5rem;
@@ -163,8 +160,6 @@
             transition: background 0.2s;
         }
         .btn-status:hover { background: #146c43; }
-
-        /* Modal status */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -229,10 +224,10 @@
             <div class="error" id="errorMsg">NISN tidak ditemukan, periksa kembali nomor Anda</div>
         </div>
 
-        <!-- Kartu hasil (tampilan lama, nilai = Nilai Raport) -->
         <div class="result-box" id="hasil">
             <div class="card">
-                <img id="foto" src="" alt="Foto Siswa" class="foto-siswa">
+                <img id="foto" src="" alt="Foto Siswa" class="foto-siswa"
+                     onerror="this.src='https://via.placeholder.com/120x150?text=Foto+Tidak+Ada'">
                 <div class="info-row"><strong>NISN:</strong> <span id="vnisn"></span></div>
                 <div class="info-row"><strong>Nama Lengkap:</strong> <span id="vnama"></span></div>
                 <div class="info-row"><strong>Kelas:</strong> <span id="vkelas"></span></div>
@@ -242,7 +237,6 @@
                 <button class="btn-detail" onclick="toggleDetail()">Cek Detail Nilai</button>
             </div>
 
-            <!-- Tabel detail -->
             <div class="detail-section" id="detailSection">
                 <h3 class="sub-title">Detail Nilai per Mata Pelajaran</h3>
                 <div class="table-wrap">
@@ -266,7 +260,6 @@
         </div>
     </div>
 
-    <!-- Modal Cek Status -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal">
             <h3>Status Kelulusan</h3>
@@ -279,9 +272,22 @@
 
     <script>
         // === GANTI DENGAN TAUTAN APLIKASI SKRIP ANDA ===
-        const URL_SKRIP = "https://script.google.com/macros/s/AKfycbxBHWxpKwstOjntbk5Z7rYWTKInWk0OlQWTbTbEfvvAVsyIJ1VfpXdq6mKgXnWVThX7/exec";
+        const URL_SKRIP = "URL_APLIKASI_SKRIP_KAMU";
+
+        // === BARU: Folder foto otomatis di GitHub ===
+        const BASE_FOTO = "https://raw.githubusercontent.com/hidayatrasyidsyafira/fotosiswaSMP4/main/";
+        const EKSTENSI_FOTO = ".JPG";
 
         let dataSiswa = [];
+
+        // === BARU: Fungsi ambil URL foto ===
+        function getFotoURL(siswa) {
+            if (siswa.foto && String(siswa.foto).trim() !== '') {
+                return siswa.foto; // pakai dari Sheet jika diisi
+            }
+            // jika kosong, otomatis dari GitHub berdasarkan NISN
+            return BASE_FOTO + String(siswa.nisn).trim() + EKSTENSI_FOTO;
+        }
 
         async function cekNilai() {
             const nisnInput = document.getElementById('nisn').value.trim();
@@ -310,21 +316,18 @@
 
                 if (dataSiswa.length > 0) {
                     const d = dataSiswa[0];
-                    document.getElementById('foto').src = d.foto || 'https://via.placeholder.com/120x150?text=Foto+Tidak+Ada';
+                    document.getElementById('foto').src = getFotoURL(d); // === BARU ===
                     document.getElementById('vnisn').textContent = d.nisn;
                     document.getElementById('vnama').textContent = d.nama;
                     document.getElementById('vkelas').textContent = d.kelas;
 
-                    // Jika banyak mapel, tampilkan "Lihat detail" di label mapel
                     const daftarMapel = dataSiswa.map(s => s.mapel).filter(Boolean).join(', ');
                     document.getElementById('vmapel').textContent = daftarMapel;
 
-                    // Nilai Raport = rata-rata dari semua mapel
                     const nilaiRaport = dataSiswa.map(s => parseFloat(s.raport)).filter(n => !isNaN(n));
                     const rataRaport = nilaiRaport.length ? (nilaiRaport.reduce((a,b)=>a+b,0) / nilaiRaport.length).toFixed(1) : (d.raport || '-');
                     document.getElementById('vraport').textContent = rataRaport;
 
-                    // Isi tabel detail
                     const tbody = document.getElementById('tabelDetail');
                     tbody.innerHTML = '';
                     dataSiswa.forEach((s, i) => {
