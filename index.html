@@ -14,10 +14,10 @@
         body {
             background: linear-gradient(135deg, #1e3c72, #2a5298);
             min-height: 100vh;
-            padding: 2rem;
+            padding: 2rem 1rem;
         }
         .container {
-            max-width: 600px;
+            max-width: 850px;
             margin: 0 auto;
             background: #fff;
             border-radius: 16px;
@@ -30,12 +30,10 @@
             padding: 2rem;
             text-align: center;
         }
-        .form-section {
-            padding: 2rem;
-        }
-        .input-group {
-            margin-bottom: 1.5rem;
-        }
+        .header h1 { font-size: 1.5rem; }
+        .header p { margin-top: 0.4rem; opacity: 0.85; }
+        .form-section { padding: 2rem; }
+        .input-group { margin-bottom: 1.5rem; }
         label {
             display: block;
             font-weight: 600;
@@ -50,11 +48,8 @@
             border-radius: 8px;
             transition: border 0.3s;
         }
-        input:focus {
-            outline: none;
-            border-color: #2a5298;
-        }
-        button {
+        input:focus { outline: none; border-color: #2a5298; }
+        .btn-primary {
             width: 100%;
             padding: 1rem;
             background: #2a5298;
@@ -66,18 +61,23 @@
             cursor: pointer;
             transition: background 0.3s;
         }
-        button:hover {
-            background: #1e3c72;
-        }
-        .result-box {
-            padding: 0 2rem 2rem;
+        .btn-primary:hover { background: #1e3c72; }
+        .loading, .error {
+            text-align: center;
+            padding: 1rem;
             display: none;
         }
+        .loading { color: #2a5298; }
+        .error { color: #dc3545; }
+
+        /* Kartu hasil (tampilan lama) */
+        .result-box { padding: 0 2rem 2rem; display: none; }
         .card {
             border: 1px solid #eee;
             border-radius: 12px;
             padding: 1.5rem;
             background: #f9fbfd;
+            text-align: center;
         }
         .foto-siswa {
             width: 120px;
@@ -91,6 +91,7 @@
             margin: 0.7rem 0;
             padding-bottom: 0.7rem;
             border-bottom: 1px dashed #ddd;
+            text-align: left;
         }
         .info-row strong {
             display: inline-block;
@@ -106,17 +107,108 @@
             font-weight: bold;
             font-size: 1.1rem;
         }
-        .error {
-            color: #dc3545;
-            padding: 1rem;
-            text-align: center;
-            display: none;
+        .btn-detail {
+            margin-top: 1.2rem;
+            width: 100%;
+            padding: 0.85rem;
+            background: #f5a623;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
         }
-        .loading {
-            text-align: center;
-            padding: 1rem;
+        .btn-detail:hover { background: #e09412; }
+
+        /* Tabel detail */
+        .detail-section {
             display: none;
-            color: #2a5298;
+            margin-top: 1.5rem;
+        }
+        h3.sub-title {
+            margin-bottom: 0.8rem;
+            color: #1e3c72;
+            font-size: 1.1rem;
+        }
+        .table-wrap { overflow-x: auto; border-radius: 8px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+        th, td {
+            padding: 0.7rem 0.6rem;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #2a5298;
+            color: white;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        tr:nth-child(even) { background: #f7f9fc; }
+        .bintang { color: #f5a623; letter-spacing: 2px; white-space: nowrap; }
+        .btn-status {
+            background: #198754;
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .btn-status:hover { background: #146c43; }
+
+        /* Modal status */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .modal h3 { color: #1e3c72; margin-bottom: 1rem; }
+        .modal .status-text {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin: 1rem 0;
+            padding: 1rem;
+            border-radius: 8px;
+            background: #f0f7ff;
+        }
+        .modal .lulus { color: #198754; background: #e8f5ee; }
+        .modal .tidak { color: #dc3545; background: #fdecea; }
+        .modal button {
+            margin-top: 1rem;
+            padding: 0.6rem 2rem;
+            background: #2a5298;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        @media (max-width: 600px) {
+            .info-row strong { width: 100%; display: block; }
+            table { font-size: 0.75rem; }
+            th, td { padding: 0.4rem 0.3rem; }
         }
     </style>
 </head>
@@ -132,49 +224,75 @@
                 <label for="nisn">Nomor Induk Siswa Nasional (NISN)</label>
                 <input type="text" id="nisn" placeholder="Contoh: 1234567890" maxlength="20">
             </div>
-            <button onclick="cekNilai()">Cek Hasil Nilai</button>
-            
-            <div class="loading" id="loading">🔄 Sedang mencari data...</div>
-            <div class="error" id="errorMsg">⚠️ NISN tidak ditemukan, periksa kembali nomor Anda</div>
+            <button class="btn-primary" onclick="cekNilai()">Cek Hasil Nilai</button>
+            <div class="loading" id="loading">Sedang mencari data...</div>
+            <div class="error" id="errorMsg">NISN tidak ditemukan, periksa kembali nomor Anda</div>
         </div>
 
+        <!-- Kartu hasil (tampilan lama, nilai = Nilai Raport) -->
         <div class="result-box" id="hasil">
             <div class="card">
-                <center>
-                    <img id="foto" src="" alt="Foto Siswa" class="foto-siswa">
-                </center>
-                <div class="info-row">
-                    <strong>NISN:</strong> <span id="vnisn"></span>
-                </div>
-                <div class="info-row">
-                    <strong>Nama Lengkap:</strong> <span id="vnama"></span>
-                </div>
-                <div class="info-row">
-                    <strong>Kelas:</strong> <span id="vkelas"></span>
-                </div>
-                <div class="info-row">
-                    <strong>Mata Pelajaran:</strong> <span id="vmapel"></span>
-                </div>
-                <div class="info-row">
-                    <strong>Nilai:</strong> <span class="nilai-badge" id="vnilai"></span>
+                <img id="foto" src="" alt="Foto Siswa" class="foto-siswa">
+                <div class="info-row"><strong>NISN:</strong> <span id="vnisn"></span></div>
+                <div class="info-row"><strong>Nama Lengkap:</strong> <span id="vnama"></span></div>
+                <div class="info-row"><strong>Kelas:</strong> <span id="vkelas"></span></div>
+                <div class="info-row"><strong>Mata Pelajaran:</strong> <span id="vmapel"></span></div>
+                <div class="info-row"><strong>Nilai Raport:</strong> <span class="nilai-badge" id="vraport"></span></div>
+
+                <button class="btn-detail" onclick="toggleDetail()">Cek Detail Nilai</button>
+            </div>
+
+            <!-- Tabel detail -->
+            <div class="detail-section" id="detailSection">
+                <h3 class="sub-title">Detail Nilai per Mata Pelajaran</h3>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nama Siswa</th>
+                                <th>Kelas</th>
+                                <th>Mata Pelajaran</th>
+                                <th>Nilai Tugas</th>
+                                <th>Nilai Ulangan</th>
+                                <th>Nilai Semester</th>
+                                <th>Perolehan Bintang</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelDetail"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Modal Cek Status -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h3>Status Kelulusan</h3>
+            <p id="modalMapel" style="color:#666;"></p>
+            <div class="status-text" id="modalStatus"></div>
+            <p id="modalNilai" style="font-size:0.9rem;color:#555;"></p>
+            <button onclick="tutupModal()">Tutup</button>
+        </div>
+    </div>
+
     <script>
-        // === GANTI BAGIAN INI DENGAN TAUTAN SKRIP ANDA ===
+        // === GANTI DENGAN TAUTAN APLIKASI SKRIP ANDA ===
         const URL_SKRIP = "https://script.google.com/macros/s/AKfycbxBHWxpKwstOjntbk5Z7rYWTKInWk0OlQWTbTbEfvvAVsyIJ1VfpXdq6mKgXnWVThX7/exec";
+
+        let dataSiswa = [];
 
         async function cekNilai() {
             const nisnInput = document.getElementById('nisn').value.trim();
             const hasilBox = document.getElementById('hasil');
             const errorMsg = document.getElementById('errorMsg');
             const loading = document.getElementById('loading');
+            const detailSection = document.getElementById('detailSection');
 
-            // Sembunyikan semua tampilan dulu
             hasilBox.style.display = 'none';
             errorMsg.style.display = 'none';
+            detailSection.style.display = 'none';
 
             if (!nisnInput) {
                 alert('Silakan masukkan NISN terlebih dahulu!');
@@ -186,21 +304,44 @@
             try {
                 const res = await fetch(URL_SKRIP);
                 const data = await res.json();
-
-                // Cari yang cocok dengan NISN
-                const siswa = data.filter(s => String(s.nisn).trim() === nisnInput);
+                dataSiswa = data.filter(s => String(s.nisn).trim() === nisnInput);
 
                 loading.style.display = 'none';
 
-                if (siswa.length > 0) {
-                    // Ambil data pertama (atau tampilkan semua jika ada banyak)
-                    const d = siswa[0];
+                if (dataSiswa.length > 0) {
+                    const d = dataSiswa[0];
                     document.getElementById('foto').src = d.foto || 'https://via.placeholder.com/120x150?text=Foto+Tidak+Ada';
                     document.getElementById('vnisn').textContent = d.nisn;
                     document.getElementById('vnama').textContent = d.nama;
                     document.getElementById('vkelas').textContent = d.kelas;
-                    document.getElementById('vmapel').textContent = d.mapel;
-                    document.getElementById('vnilai').textContent = d.nilai;
+
+                    // Jika banyak mapel, tampilkan "Lihat detail" di label mapel
+                    const daftarMapel = dataSiswa.map(s => s.mapel).filter(Boolean).join(', ');
+                    document.getElementById('vmapel').textContent = daftarMapel;
+
+                    // Nilai Raport = rata-rata dari semua mapel
+                    const nilaiRaport = dataSiswa.map(s => parseFloat(s.raport)).filter(n => !isNaN(n));
+                    const rataRaport = nilaiRaport.length ? (nilaiRaport.reduce((a,b)=>a+b,0) / nilaiRaport.length).toFixed(1) : (d.raport || '-');
+                    document.getElementById('vraport').textContent = rataRaport;
+
+                    // Isi tabel detail
+                    const tbody = document.getElementById('tabelDetail');
+                    tbody.innerHTML = '';
+                    dataSiswa.forEach((s, i) => {
+                        const bintangNum = parseInt(s.bintang) || 0;
+                        const bintangHTML = '★'.repeat(bintangNum) + '☆'.repeat(Math.max(0, 5 - bintangNum));
+                        tbody.innerHTML += `
+                            <tr>
+                                <td style="text-align:left;">${s.nama || '-'}</td>
+                                <td>${s.kelas || '-'}</td>
+                                <td style="text-align:left;">${s.mapel || '-'}</td>
+                                <td>${s.tugas ?? '-'}</td>
+                                <td>${s.ulangan ?? '-'}</td>
+                                <td>${s.semester ?? '-'}</td>
+                                <td class="bintang">${bintangHTML}</td>
+                                <td><button class="btn-status" onclick="cekStatus(${i})">Cek Status</button></td>
+                            </tr>`;
+                    });
 
                     hasilBox.style.display = 'block';
                 } else {
@@ -212,7 +353,38 @@
             }
         }
 
-        // Tekan Enter untuk mencari
+        function toggleDetail() {
+            const sec = document.getElementById('detailSection');
+            sec.style.display = (sec.style.display === 'block') ? 'none' : 'block';
+            if (sec.style.display === 'block') {
+                sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function cekStatus(index) {
+            const s = dataSiswa[index];
+            const ket = (s.keterangan || '-').toString();
+            const statusEl = document.getElementById('modalStatus');
+            const isLulus = /lulus|tuntas|kompeten|baik/i.test(ket);
+            const isTidak = /tidak|belum|gagal/i.test(ket);
+
+            document.getElementById('modalMapel').textContent = 'Mata Pelajaran: ' + (s.mapel || '-');
+            statusEl.textContent = ket;
+            statusEl.className = 'status-text ' + (isLulus ? 'lulus' : isTidak ? 'tidak' : '');
+            document.getElementById('modalNilai').textContent =
+                `Nilai Raport: ${s.raport ?? '-'} | Tugas: ${s.tugas ?? '-'} | Ulangan: ${s.ulangan ?? '-'} | Semester: ${s.semester ?? '-'}`;
+
+            document.getElementById('modalOverlay').style.display = 'flex';
+        }
+
+        function tutupModal() {
+            document.getElementById('modalOverlay').style.display = 'none';
+        }
+
+        document.getElementById('modalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) tutupModal();
+        });
+
         document.getElementById('nisn').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') cekNilai();
         });
