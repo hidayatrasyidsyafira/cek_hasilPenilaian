@@ -166,26 +166,96 @@
             border-radius: 12px;
             padding: 1.5rem;
             max-width: 95%;
-            width: 900px;
-            max-height: 90vh;
-            overflow-y: auto;
+            width: 450px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
         }
-        .modal h3 { color: #1e3c72; margin-bottom: 1rem; text-align: center; }
+        .modal h3 { color: #1e3c72; margin-bottom: 1rem; text-align: center; font-size: 1.1rem; }
+        .modal .status-text {
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .modal .status-text.lulus { background: #e8f5ee; color: #198754; }
+        .modal .status-text.tidak { background: #fdecea; color: #dc3545; }
+        .modal .status-text.normal { background: #f0f7ff; color: #333; }
+        .modal .nilai-ringkas {
+            text-align: center;
+            color: #555;
+            font-size: 0.9rem;
+            margin-bottom: 1.2rem;
+        }
         .modal .btn-tutup {
-            margin-top: 1rem;
-            padding: 0.6rem 2rem;
+            width: 100%;
+            padding: 0.7rem;
             background: #2a5298;
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
-            width: 100%;
+            font-size: 0.95rem;
+            margin-top: 0.5rem;
         }
+        .modal .btn-unduh-surat {
+            width: 100%;
+            padding: 0.7rem;
+            background: #198754;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.7rem;
+            display: none;
+        }
+        .modal .btn-unduh-surat.show { display: block; }
+        .modal .btn-unduh-surat:hover { background: #146c43; }
         .modal-table { margin-top: 1rem; }
         .modal-table th { font-size: 0.8rem; padding: 0.6rem 0.3rem; }
         .modal-table td { font-size: 0.8rem; padding: 0.6rem 0.3rem; }
+
+        /* Surat Keterangan (Cetak) */
+        .surat-ket {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: white;
+            padding: 2rem;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        .surat-ket .isi-surat {
+            max-width: 700px;
+            margin: 0 auto;
+            font-family: 'Times New Roman', serif;
+            line-height: 1.6;
+        }
+        .surat-ket .kepala { text-align: center; margin-bottom: 2rem; }
+        .surat-ket .kepala h2 { font-size: 1.3rem; text-transform: uppercase; }
+        .surat-ket .kepala .alamat { font-size: 0.85rem; }
+        .surat-ket .isi { text-align: justify; }
+        .surat-ket .ttd { margin-top: 3rem; text-align: right; }
+        .surat-ket .btn-tutup-surat {
+            position: fixed;
+            top: 1rem; right: 1rem;
+            padding: 0.5rem 1.5rem;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+        @media print {
+            body * { visibility: hidden; }
+            .surat-ket, .surat-ket * { visibility: visible; }
+            .surat-ket { position: absolute; left: 0; top: 0; padding: 0; }
+            .btn-tutup-surat { display: none; }
+        }
 
         @media (max-width: 600px) {
             .info-row strong { width: 100%; display: block; }
@@ -298,14 +368,46 @@
         </div>
     </div>
 
-    <!-- Modal Status -->
+    <!-- Modal Status Kelulusan -->
     <div class="modal-overlay" id="modalStatus">
         <div class="modal">
             <h3>Status Kelulusan</h3>
-            <p id="modalMapel" style="color:#666;"></p>
-            <div class="status-text" id="modalStatusText" style="font-size:1.3rem;font-weight:bold;margin:1rem 0;padding:1rem;border-radius:8px;background:#f0f7ff;"></div>
-            <p id="modalNilai" style="font-size:0.9rem;color:#555;"></p>
+            <p style="color:#666; margin-bottom:0.5rem;">Mata Pelajaran: <span id="modalMapel"></span></p>
+            <div id="modalStatusText" class="status-text normal"></div>
+            <p class="nilai-ringkas" id="modalNilai"></p>
+            <button class="btn-unduh-surat" id="btnUnduhSuratModal" onclick="unduhSurat()">📄 Download Surat Keterangan</button>
             <button class="btn-tutup" onclick="tutupModal('modalStatus')">Tutup</button>
+        </div>
+    </div>
+
+    <!-- Surat Keterangan (Cetak) -->
+    <div class="surat-ket" id="suratKet">
+        <button class="btn-tutup-surat" onclick="tutupSurat()">✕ Tutup</button>
+        <div class="isi-surat">
+            <div class="kepala">
+                <h2>SMP Negeri 4 [Nama Kota]</h2>
+                <div class="alamat">[Alamat Lengkap Sekolah], Telp: [Nomor] — Kode Pos: [xxxxxx]</div>
+                <hr style="margin: 0.5rem 0 1.5rem;border:0.5px solid #000;">
+            </div>
+            <div class="isi">
+                <p style="text-align:center;font-weight:bold;text-decoration:underline;margin-bottom:2rem;">SURAT KETERANGAN</p>
+                <p style="margin-bottom: 1rem;">Yang bertanda tangan di bawah ini, Kepala SMP Negeri 4 [Nama Kota], menerangkan bahwa:</p>
+                <table style="margin: 0 0 1rem 2rem;border-collapse:collapse;">
+                    <tr><td style="padding: 0.3rem 1rem 0.3rem 0;"><strong>Nama</strong></td><td>: <span id="sNama"></span></td></tr>
+                    <tr><td style="padding: 0.3rem 1rem 0.3rem 0;"><strong>NISN</strong></td><td>: <span id="sNisn"></span></td></tr>
+                    <tr><td style="padding: 0.3rem 1rem 0.3rem 0;"><strong>Kelas</strong></td><td>: <span id="sKelas"></span></td></tr>
+                    <tr><td style="padding: 0.3rem 1rem 0.3rem 0;"><strong>Mata Pelajaran</strong></td><td>: <span id="sMapel"></span></td></tr>
+                </table>
+                <p style="margin-bottom: 1rem;">Berdasarkan hasil penilaian semester, siswa tersebut dinyatakan memenuhi syarat dan <strong>tidak wajib mengikuti ujian/ulangan semester</strong> untuk mata pelajaran di atas.</p>
+                <p style="margin-bottom: 1rem;">Demikian surat keterangan ini dibuat untuk dapat dipergunakan sebagaimana mestinya.</p>
+            </div>
+            <div class="ttd">
+                <p>[Tempat], [Tanggal]</p>
+                <p>Kepala Sekolah,</p>
+                <br><br><br>
+                <p style="font-weight:bold;text-decoration:underline;">[Nama Kepala Sekolah]</p>
+                <p>NIP. [xxxxxxxxxxxxxxx]</p>
+            </div>
         </div>
     </div>
 
@@ -324,6 +426,7 @@
         let dataUtama = [];
         let dataRincian = [];
         let nisnSaatIni = '';
+        let dataSaatIni = null;
 
         async function cekNilai() {
             const nisnInput = document.getElementById('nisn').value.trim();
@@ -355,6 +458,7 @@
 
                 if (hasilSiswa.length > 0) {
                     const d = hasilSiswa[0];
+                    dataSaatIni = d;
                     document.getElementById('foto').src = getFotoURL(d);
                     document.getElementById('vnisn').textContent = d.nisn;
                     document.getElementById('vnama').textContent = d.nama;
@@ -402,7 +506,7 @@
             if (sec.style.display === 'block') sec.scrollIntoView({behavior:'smooth'});
         }
 
-        // === Klik Nilai Tugas → Tampilkan A–I ===
+        // Klik Nilai Tugas → Tampilkan A–I
         function bukaTugas(nisn, mapel) {
             const filter = dataRincian.filter(r => 
                 String(r.nisn).trim() === String(nisn).trim() && 
@@ -432,7 +536,7 @@
             document.getElementById('modalTugas').style.display = 'flex';
         }
 
-        // === Klik Nilai Ulangan → Tampilkan A–F + J–M ===
+        // Klik Nilai Ulangan → Tampilkan A–F + J–M
         function bukaUlangan(nisn, mapel) {
             const filter = dataRincian.filter(r => 
                 String(r.nisn).trim() === String(nisn).trim() && 
@@ -462,21 +566,31 @@
             document.getElementById('modalUlangan').style.display = 'flex';
         }
 
+        // Klik Cek Status → Tampilkan dengan tombol unduh surat
+        let dataMapelSaatIni = null;
         function cekStatus(index) {
-            const s = dataUtama.filter(x => String(x.nisn).trim() === nisnSaatIni)[index];
+            const hasilSiswa = dataUtama.filter(x => String(x.nisn).trim() === nisnSaatIni);
+            const s = hasilSiswa[index];
             if (!s) return;
+            
+            dataMapelSaatIni = s; // simpan data mapel saat ini untuk surat
+            
             const ket = (s.keterangan || '-').toString();
+            const isTidakWajib = /tidak wajib ikut semester/i.test(ket);
             const isLulus = /lulus|tuntas|kompeten|baik/i.test(ket);
             const isTidak = /tidak|belum|gagal/i.test(ket);
 
-            document.getElementById('modalMapel').textContent = 'Mata Pelajaran: ' + (s.mapel || '-');
+            document.getElementById('modalMapel').textContent = s.mapel || '-';
             const st = document.getElementById('modalStatusText');
             st.textContent = ket;
-            st.className = 'status-text ' + (isLulus ? '' : isTidak ? '' : '');
-            st.style.color = isLulus ? '#198754' : isTidak ? '#dc3545' : '#333';
-            st.style.background = isLulus ? '#e8f5ee' : isTidak ? '#fdecea' : '#f0f7ff';
+            st.className = 'status-text ' + (isTidakWajib ? 'tidak' : isLulus ? 'lulus' : isTidak ? 'tidak' : 'normal');
+            
             document.getElementById('modalNilai').textContent =
                 `Raport: ${s.raport ?? '-'} | Tugas: ${s.tugas ?? '-'} | Ulangan: ${s.ulangan ?? '-'} | Semester: ${s.semester ?? '-'}`;
+
+            // Tampilkan/sembunyikan tombol unduh surat
+            const btnUnduh = document.getElementById('btnUnduhSuratModal');
+            btnUnduh.classList.toggle('show', isTidakWajib);
 
             document.getElementById('modalStatus').style.display = 'flex';
         }
@@ -485,7 +599,25 @@
             document.getElementById(id).style.display = 'none';
         }
 
-        // Klik latar belakang untuk tutup
+        // === Fungsi Surat Keterangan ===
+        function unduhSurat() {
+            if (!dataMapelSaatIni) return;
+            // Isi data ke surat
+            document.getElementById('sNama').textContent = dataMapelSaatIni.nama || '-';
+            document.getElementById('sNisn').textContent = dataMapelSaatIni.nisn || '-';
+            document.getElementById('sKelas').textContent = dataMapelSaatIni.kelas || '-';
+            document.getElementById('sMapel').textContent = dataMapelSaatIni.mapel || '-';
+            // Tutup modal dulu, lalu buka surat
+            tutupModal('modalStatus');
+            document.getElementById('suratKet').style.display = 'block';
+            window.print(); // Langsung buka jendela cetak
+        }
+
+        function tutupSurat() {
+            document.getElementById('suratKet').style.display = 'none';
+        }
+
+        // Klik latar belakang untuk tutup modal
         document.querySelectorAll('.modal-overlay').forEach(ovl => {
             ovl.addEventListener('click', e => {
                 if (e.target === ovl) ovl.style.display = 'none';
