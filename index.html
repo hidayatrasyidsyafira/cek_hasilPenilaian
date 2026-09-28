@@ -4,7 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cek Hasil Nilai Semester</title>
+    
     <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Times New Roman', serif; }
         body {
             background: linear-gradient(135deg, #1e3c72, #2a5298);
@@ -163,9 +169,14 @@
             background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; z-index: 1001;
         }
         @media print {
-            body * { visibility: hidden; }
+           body * { visibility: hidden; }
             .surat-ket, .surat-ket * { visibility: visible; }
-            .surat-ket { position: absolute; left: 0; top: 0; padding: 0; }
+            .surat-ket { 
+                position: absolute; 
+                left: 0; top: 0; 
+                padding: 2cm;  /* ← kasih jarak tepi kertas */
+                width: 100%;
+            }
             .btn-tutup-surat { display: none; }
         }
     </style>
