@@ -177,8 +177,8 @@
             text-align: center;
             margin-bottom: 1rem;
         }
-        .modal .status-text.lulus { background: #e8f5ee; color: #198754; }
         .modal .status-text.tidak { background: #fdecea; color: #dc3545; }
+        .modal .status-text.lulus { background: #e8f5ee; color: #198754; }
         .modal .status-text.normal { background: #f0f7ff; color: #333; }
         .modal .nilai-ringkas {
             text-align: center;
@@ -234,7 +234,20 @@
             font-family: 'Times New Roman', serif;
             line-height: 1.6;
         }
-        .surat-ket .kepala { text-align: center; margin-bottom: 2rem; }
+        .surat-ket .kepala {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #000;
+        }
+        .surat-ket .logo {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+        }
+        .surat-ket .kepala-teks { flex: 1; }
         .surat-ket .kepala h2 { font-size: 1.3rem; text-transform: uppercase; }
         .surat-ket .kepala .alamat { font-size: 0.85rem; }
         .surat-ket .isi { text-align: justify; }
@@ -261,6 +274,7 @@
             .info-row strong { width: 100%; display: block; }
             table { font-size: 0.7rem; }
             th, td { padding: 0.4rem 0.2rem; }
+            .surat-ket .kepala { flex-direction: column; }
         }
     </style>
 </head>
@@ -380,18 +394,20 @@
         </div>
     </div>
 
-    <!-- Surat Keterangan (Cetak) -->
+    <!-- Surat Keterangan (Data dari Sheet3) -->
     <div class="surat-ket" id="suratKet">
         <button class="btn-tutup-surat" onclick="tutupSurat()">✕ Tutup</button>
         <div class="isi-surat">
             <div class="kepala">
-                <h2>SMP Negeri 4 [Nama Kota]</h2>
-                <div class="alamat">[Alamat Lengkap Sekolah], Telp: [Nomor] — Kode Pos: [xxxxxx]</div>
-                <hr style="margin: 0.5rem 0 1.5rem;border:0.5px solid #000;">
+                <img id="sLogo" src="" alt="Logo Sekolah" class="logo" onerror="this.style.display='none'">
+                <div class="kepala-teks">
+                    <h2 id="sNamaSekolah"></h2>
+                    <div class="alamat" id="sAlamat"></div>
+                </div>
             </div>
             <div class="isi">
                 <p style="text-align:center;font-weight:bold;text-decoration:underline;margin-bottom:2rem;">SURAT KETERANGAN</p>
-                <p style="margin-bottom: 1rem;">Yang bertanda tangan di bawah ini, Kepala SMP Negeri 4 [Nama Kota], menerangkan bahwa:</p>
+                <p style="margin-bottom: 1rem;">Yang bertanda tangan di bawah ini, Kepala <span id="sNamaSekolah2"></span>, menerangkan bahwa:</p>
                 <table style="margin: 0 0 1rem 2rem;border-collapse:collapse;">
                     <tr><td style="padding: 0.3rem 1rem 0.3rem 0;"><strong>Nama</strong></td><td>: <span id="sNama"></span></td></tr>
                     <tr><td style="padding: 0.3rem 1rem 0.3rem 0;"><strong>NISN</strong></td><td>: <span id="sNisn"></span></td></tr>
@@ -402,11 +418,11 @@
                 <p style="margin-bottom: 1rem;">Demikian surat keterangan ini dibuat untuk dapat dipergunakan sebagaimana mestinya.</p>
             </div>
             <div class="ttd">
-                <p>[Tempat], [Tanggal]</p>
+                <p><span id="sTempat"></span>, <span id="sTanggal"></span></p>
                 <p>Kepala Sekolah,</p>
                 <br><br><br>
-                <p style="font-weight:bold;text-decoration:underline;">[Nama Kepala Sekolah]</p>
-                <p>NIP. [xxxxxxxxxxxxxxx]</p>
+                <p style="font-weight:bold;text-decoration:underline;" id="sNamaGuru"></p>
+                <p>NIP. <span id="sNIP"></span></p>
             </div>
         </div>
     </div>
@@ -425,8 +441,9 @@
 
         let dataUtama = [];
         let dataRincian = [];
+        let dataSekolah = {};
         let nisnSaatIni = '';
-        let dataSaatIni = null;
+        let dataMapelSaatIni = null;
 
         async function cekNilai() {
             const nisnInput = document.getElementById('nisn').value.trim();
@@ -451,6 +468,7 @@
                 const semuaData = await res.json();
                 dataUtama = semuaData.utama || [];
                 dataRincian = semuaData.rincian || [];
+                dataSekolah = semuaData.sekolah || {};
                 nisnSaatIni = nisnInput;
 
                 const hasilSiswa = dataUtama.filter(s => String(s.nisn).trim() === nisnInput);
@@ -458,7 +476,6 @@
 
                 if (hasilSiswa.length > 0) {
                     const d = hasilSiswa[0];
-                    dataSaatIni = d;
                     document.getElementById('foto').src = getFotoURL(d);
                     document.getElementById('vnisn').textContent = d.nisn;
                     document.getElementById('vnama').textContent = d.nama;
@@ -566,29 +583,25 @@
             document.getElementById('modalUlangan').style.display = 'flex';
         }
 
-        // Klik Cek Status → Tampilkan dengan tombol unduh surat
-        let dataMapelSaatIni = null;
+        // Klik Cek Status
         function cekStatus(index) {
             const hasilSiswa = dataUtama.filter(x => String(x.nisn).trim() === nisnSaatIni);
             const s = hasilSiswa[index];
             if (!s) return;
             
-            dataMapelSaatIni = s; // simpan data mapel saat ini untuk surat
+            dataMapelSaatIni = s;
             
             const ket = (s.keterangan || '-').toString();
             const isTidakWajib = /tidak wajib ikut semester/i.test(ket);
-            const isLulus = /lulus|tuntas|kompeten|baik/i.test(ket);
-            const isTidak = /tidak|belum|gagal/i.test(ket);
 
             document.getElementById('modalMapel').textContent = s.mapel || '-';
             const st = document.getElementById('modalStatusText');
             st.textContent = ket;
-            st.className = 'status-text ' + (isTidakWajib ? 'tidak' : isLulus ? 'lulus' : isTidak ? 'tidak' : 'normal');
+            st.className = 'status-text ' + (isTidakWajib ? 'tidak' : 'normal');
             
             document.getElementById('modalNilai').textContent =
                 `Raport: ${s.raport ?? '-'} | Tugas: ${s.tugas ?? '-'} | Ulangan: ${s.ulangan ?? '-'} | Semester: ${s.semester ?? '-'}`;
 
-            // Tampilkan/sembunyikan tombol unduh surat
             const btnUnduh = document.getElementById('btnUnduhSuratModal');
             btnUnduh.classList.toggle('show', isTidakWajib);
 
@@ -599,18 +612,31 @@
             document.getElementById(id).style.display = 'none';
         }
 
-        // === Fungsi Surat Keterangan ===
+        // === Surat dari Sheet3 ===
         function unduhSurat() {
             if (!dataMapelSaatIni) return;
-            // Isi data ke surat
-            document.getElementById('sNama').textContent = dataMapelSaatIni.nama || '-';
-            document.getElementById('sNisn').textContent = dataMapelSaatIni.nisn || '-';
-            document.getElementById('sKelas').textContent = dataMapelSaatIni.kelas || '-';
-            document.getElementById('sMapel').textContent = dataMapelSaatIni.mapel || '-';
-            // Tutup modal dulu, lalu buka surat
+            const s = dataMapelSaatIni;
+            const skl = dataSekolah;
+
+            // Isi data sekolah dari Sheet3
+            document.getElementById('sNamaSekolah').textContent = skl.NamaSekolah || '';
+            document.getElementById('sNamaSekolah2').textContent = skl.NamaSekolah || '';
+            document.getElementById('sAlamat').textContent = skl.Alamat || '';
+            document.getElementById('sLogo').src = skl.LogoSekolah || '';
+            document.getElementById('sTempat').textContent = skl.Tempat || '';
+            document.getElementById('sTanggal').textContent = skl.Tanggal || '';
+            document.getElementById('sNamaGuru').textContent = skl.NamaGuru || '';
+            document.getElementById('sNIP').textContent = skl.NIP || '';
+
+            // Isi data siswa
+            document.getElementById('sNama').textContent = s.nama || '-';
+            document.getElementById('sNisn').textContent = s.nisn || '-';
+            document.getElementById('sKelas').textContent = s.kelas || '-';
+            document.getElementById('sMapel').textContent = s.mapel || '-';
+
             tutupModal('modalStatus');
             document.getElementById('suratKet').style.display = 'block';
-            window.print(); // Langsung buka jendela cetak
+            window.print();
         }
 
         function tutupSurat() {
