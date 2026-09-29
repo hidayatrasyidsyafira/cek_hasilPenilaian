@@ -117,7 +117,6 @@
             border-radius: 6px;
             cursor: pointer;
         }
-        /* === Tugas & Ulangan bisa diklik === */
         .nilai-link {
             color: #2a5298;
             font-weight: bold;
@@ -126,7 +125,34 @@
         }
         .nilai-link:hover { color: #f5a623; }
 
-        /* Modal */
+        /* === TOOLTIP === */
+        .tooltip-cell {
+            position: relative;
+            cursor: help;
+        }
+        .tooltip-text {
+            visibility: hidden;
+            position: absolute;
+            z-index: 100;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            text-align: center;
+            padding: 0.5rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .tooltip-cell:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
         .modal-overlay {
             display: none;
             position: fixed;
@@ -160,7 +186,6 @@
         .rata-highlight { background: #e8f5ee !important; font-weight: bold; }
         .table-wrap { overflow-x: auto; }
 
-        /* === SURAT KETERANGAN === */
         .surat-ket {
             display: none;
             position: fixed;
@@ -240,7 +265,7 @@
         </div>
     </div>
 
-    <!-- Modal Rincian Tugas (dari Sheet2, kolom A–I) -->
+    <!-- Modal Rincian Tugas -->
     <div class="modal-overlay" id="modalTugas">
         <div class="modal modal-lebar">
             <h3>Rincian Nilai Tugas</h3>
@@ -259,7 +284,7 @@
         </div>
     </div>
 
-    <!-- Modal Rincian Ulangan (dari Sheet2, kolom A–F + J–M) -->
+    <!-- Modal Rincian Ulangan -->
     <div class="modal-overlay" id="modalUlangan">
         <div class="modal modal-lebar">
             <h3>Rincian Nilai Ulangan</h3>
@@ -371,7 +396,6 @@
             tbody.innerHTML = "";
             hasil.forEach((s, i) => {
                 const bintang = (s.bintang !== "" && s.bintang !== undefined) ? "★ " + s.bintang : "-";
-                // Tugas & Ulangan sekarang bisa diklik
                 tbody.innerHTML += `
                     <tr>
                         <td>${s.nama}</td><td>${s.kelas}</td><td>${s.mapel}</td>
@@ -390,7 +414,6 @@
             sec.style.display = sec.style.display === "block" ? "none" : "block";
         }
 
-        // === KLIK NILAI TUGAS → tampilkan rincian dari Sheet2 (kolom A–I) ===
         function bukaTugas(nisn, mapel) {
             const filter = dataRincian.filter(r =>
                 String(r.nisn).trim() === String(nisn).trim() &&
@@ -402,6 +425,10 @@
                 tbody.innerHTML = '<tr><td colspan="9" style="padding:1rem;color:#666;">Data rincian tugas tidak ditemukan</td></tr>';
             } else {
                 filter.forEach(r => {
+                    // Kolom N = ketTugas1, O = ketTugas2, P = ketTugas3
+                    const ket1 = r.ketTugas1 || "-";
+                    const ket2 = r.ketTugas2 || "-";
+                    const ket3 = r.ketTugas3 || "-";
                     tbody.innerHTML += `
                         <tr>
                             <td>${r.no ?? '-'}</td>
@@ -409,9 +436,9 @@
                             <td>${r.nama ?? '-'}</td>
                             <td>${r.kelas ?? '-'}</td>
                             <td>${r.mapel ?? '-'}</td>
-                            <td>${r.tugas1 ?? '-'}</td>
-                            <td>${r.tugas2 ?? '-'}</td>
-                            <td>${r.tugas3 ?? '-'}</td>
+                            <td class="tooltip-cell">${r.tugas1 ?? '-'}<span class="tooltip-text">${ket1}</span></td>
+                            <td class="tooltip-cell">${r.tugas2 ?? '-'}<span class="tooltip-text">${ket2}</span></td>
+                            <td class="tooltip-cell">${r.tugas3 ?? '-'}<span class="tooltip-text">${ket3}</span></td>
                             <td class="rata-highlight">${r.rataTugas ?? '-'}</td>
                         </tr>`;
                 });
@@ -419,7 +446,6 @@
             document.getElementById("modalTugas").style.display = "flex";
         }
 
-        // === KLIK NILAI ULANGAN → tampilkan rincian dari Sheet2 (kolom A–F + J–M) ===
         function bukaUlangan(nisn, mapel) {
             const filter = dataRincian.filter(r =>
                 String(r.nisn).trim() === String(nisn).trim() &&
