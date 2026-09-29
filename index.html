@@ -117,7 +117,16 @@
             border-radius: 6px;
             cursor: pointer;
         }
-        /* Modal Status */
+        /* === Tugas & Ulangan bisa diklik === */
+        .nilai-link {
+            color: #2a5298;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .nilai-link:hover { color: #f5a623; }
+
+        /* Modal */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -126,7 +135,9 @@
         }
         .modal {
             background: white; border-radius: 12px; padding: 1.5rem; max-width: 450px; width: 100%;
+            max-height: 90vh; overflow-y: auto;
         }
+        .modal-lebar { max-width: 950px; width: 95%; }
         .modal h3 { text-align: center; margin-bottom: 1rem; color: #1e3c72; }
         .status-text {
             padding: 1rem; border-radius: 8px; font-weight: bold; text-align: center; margin-bottom: 1rem;
@@ -141,9 +152,15 @@
         .btn-unduh-surat.show { display: block; }
         .btn-tutup {
             width: 100%; padding: 0.7rem; background: #2a5298; color: white; border: none;
-            border-radius: 8px; cursor: pointer; font-weight: 600;
+            border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 1rem;
         }
-        /* === SURAT KETERANGAN — Logo TENGAH ATAS === */
+        .modal-table { margin-top: 0.5rem; }
+        .modal-table th { font-size: 0.8rem; padding: 0.6rem 0.3rem; }
+        .modal-table td { font-size: 0.85rem; padding: 0.6rem 0.3rem; }
+        .rata-highlight { background: #e8f5ee !important; font-weight: bold; }
+        .table-wrap { overflow-x: auto; }
+
+        /* === SURAT KETERANGAN === */
         .surat-ket {
             display: none;
             position: fixed;
@@ -177,7 +194,7 @@
             .surat-ket { 
                 position: absolute; 
                 left: 0; top: 0; 
-                padding: 2cm;  /* ← kasih jarak tepi kertas */
+                padding: 2cm;
                 width: 100%;
             }
             .btn-tutup-surat { display: none; }
@@ -222,6 +239,45 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Rincian Tugas (dari Sheet2, kolom A–I) -->
+    <div class="modal-overlay" id="modalTugas">
+        <div class="modal modal-lebar">
+            <h3>Rincian Nilai Tugas</h3>
+            <div class="table-wrap">
+                <table class="modal-table">
+                    <thead>
+                        <tr>
+                            <th>No</th><th>NISN</th><th>Nama Siswa</th><th>Kelas</th><th>Mata Pelajaran</th>
+                            <th>Tugas 1</th><th>Tugas 2</th><th>Tugas 3</th><th>Rata-Rata</th>
+                        </tr>
+                    </thead>
+                    <tbody id="isiTugas"></tbody>
+                </table>
+            </div>
+            <button class="btn-tutup" onclick="tutupModal('modalTugas')">Tutup</button>
+        </div>
+    </div>
+
+    <!-- Modal Rincian Ulangan (dari Sheet2, kolom A–F + J–M) -->
+    <div class="modal-overlay" id="modalUlangan">
+        <div class="modal modal-lebar">
+            <h3>Rincian Nilai Ulangan</h3>
+            <div class="table-wrap">
+                <table class="modal-table">
+                    <thead>
+                        <tr>
+                            <th>No</th><th>NISN</th><th>Nama Siswa</th><th>Kelas</th><th>Mata Pelajaran</th>
+                            <th>Ulangan 1</th><th>Ulangan 2</th><th>Ulangan 3</th><th>Rata-Rata</th>
+                        </tr>
+                    </thead>
+                    <tbody id="isiUlangan"></tbody>
+                </table>
+            </div>
+            <button class="btn-tutup" onclick="tutupModal('modalUlangan')">Tutup</button>
+        </div>
+    </div>
+
     <!-- Modal Status -->
     <div class="modal-overlay" id="modalStatus">
         <div class="modal">
@@ -233,6 +289,7 @@
             <button class="btn-tutup" onclick="tutupModal('modalStatus')">Tutup</button>
         </div>
     </div>
+
     <!-- Surat Keterangan -->
     <div class="surat-ket" id="suratKet">
         <button class="btn-tutup-surat" onclick="tutupSurat()">✕ Tutup</button>
@@ -265,6 +322,7 @@
             </div>
         </div>
     </div>
+
     <script>
         const URL_SKRIP = "https://script.google.com/macros/s/AKfycbxBHWxpKwstOjntbk5Z7rYWTKInWk0OlQWTbTbEfvvAVsyIJ1VfpXdq6mKgXnWVThX7/exec";
         const BASE_FOTO = "https://raw.githubusercontent.com/hidayatrasyidsyafira/fotosiswaSMAN9/main/";
@@ -289,7 +347,6 @@
                 dataRincian = json.rincian || [];
                 dataSekolah = json.sekolah || {};
                 nisnSaatIni = nisn;
-                console.log("Data Sekolah:", dataSekolah);
                 const hasil = dataUtama.filter(s => String(s.nisn).trim() === nisn);
                 document.getElementById("loading").style.display = "none";
                 if (hasil.length > 0) tampilkanHasil(hasil);
@@ -314,10 +371,13 @@
             tbody.innerHTML = "";
             hasil.forEach((s, i) => {
                 const bintang = (s.bintang !== "" && s.bintang !== undefined) ? "★ " + s.bintang : "-";
+                // Tugas & Ulangan sekarang bisa diklik
                 tbody.innerHTML += `
                     <tr>
                         <td>${s.nama}</td><td>${s.kelas}</td><td>${s.mapel}</td>
-                        <td>${s.tugas}</td><td>${s.ulangan}</td><td>${s.semester}</td>
+                        <td><span class="nilai-link" onclick="bukaTugas('${s.nisn}','${s.mapel}')">${s.tugas ?? '-'}</span></td>
+                        <td><span class="nilai-link" onclick="bukaUlangan('${s.nisn}','${s.mapel}')">${s.ulangan ?? '-'}</span></td>
+                        <td>${s.semester}</td>
                         <td class="bintang">${bintang}</td>
                         <td><button class="btn-status" onclick="cekStatus(${i})">Cek Status</button></td>
                     </tr>`;
@@ -330,6 +390,64 @@
             sec.style.display = sec.style.display === "block" ? "none" : "block";
         }
 
+        // === KLIK NILAI TUGAS → tampilkan rincian dari Sheet2 (kolom A–I) ===
+        function bukaTugas(nisn, mapel) {
+            const filter = dataRincian.filter(r =>
+                String(r.nisn).trim() === String(nisn).trim() &&
+                String(r.mapel).trim() === String(mapel).trim()
+            );
+            const tbody = document.getElementById("isiTugas");
+            tbody.innerHTML = "";
+            if (filter.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="padding:1rem;color:#666;">Data rincian tugas tidak ditemukan</td></tr>';
+            } else {
+                filter.forEach(r => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${r.no ?? '-'}</td>
+                            <td>${r.nisn ?? '-'}</td>
+                            <td>${r.nama ?? '-'}</td>
+                            <td>${r.kelas ?? '-'}</td>
+                            <td>${r.mapel ?? '-'}</td>
+                            <td>${r.tugas1 ?? '-'}</td>
+                            <td>${r.tugas2 ?? '-'}</td>
+                            <td>${r.tugas3 ?? '-'}</td>
+                            <td class="rata-highlight">${r.rataTugas ?? '-'}</td>
+                        </tr>`;
+                });
+            }
+            document.getElementById("modalTugas").style.display = "flex";
+        }
+
+        // === KLIK NILAI ULANGAN → tampilkan rincian dari Sheet2 (kolom A–F + J–M) ===
+        function bukaUlangan(nisn, mapel) {
+            const filter = dataRincian.filter(r =>
+                String(r.nisn).trim() === String(nisn).trim() &&
+                String(r.mapel).trim() === String(mapel).trim()
+            );
+            const tbody = document.getElementById("isiUlangan");
+            tbody.innerHTML = "";
+            if (filter.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="padding:1rem;color:#666;">Data rincian ulangan tidak ditemukan</td></tr>';
+            } else {
+                filter.forEach(r => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${r.no ?? '-'}</td>
+                            <td>${r.nisn ?? '-'}</td>
+                            <td>${r.nama ?? '-'}</td>
+                            <td>${r.kelas ?? '-'}</td>
+                            <td>${r.mapel ?? '-'}</td>
+                            <td>${r.ulangan1 ?? '-'}</td>
+                            <td>${r.ulangan2 ?? '-'}</td>
+                            <td>${r.ulangan3 ?? '-'}</td>
+                            <td class="rata-highlight">${r.rataUlangan ?? '-'}</td>
+                        </tr>`;
+                });
+            }
+            document.getElementById("modalUlangan").style.display = "flex";
+        }
+
         function cekStatus(index) {
             const hasilSiswa = dataUtama.filter(s => String(s.nisn).trim() === nisnSaatIni);
             const siswa = hasilSiswa[index];
@@ -338,7 +456,6 @@
             const ket = (siswa.keterangan || "").toString();
             const munculTombol = /tidak wajib ikut semester/i.test(ket);
             document.getElementById("modalMapel").textContent = siswa.mapel || "-";
-
             const st = document.getElementById("modalStatusText");
             st.textContent = ket.toUpperCase();
             if (/tidak wajib ikut semester/i.test(ket)) {
@@ -346,7 +463,6 @@
             } else {
                 st.className = "status-text merah";
             }
-            
             document.getElementById("modalNilai").textContent =
                 `Raport: ${siswa.raport || '-'} | Tugas: ${siswa.tugas || '-'} | Ulangan: ${siswa.ulangan || '-'} | Semester: ${siswa.semester || '-'}`;
             document.getElementById("btnUnduhSuratModal").classList.toggle("show", munculTombol);
@@ -362,14 +478,11 @@
             document.getElementById("sNamaSekolah").textContent = skl.NamaSekolah || "";
             document.getElementById("sNamaSekolah2").textContent = skl.NamaSekolah || "";
             document.getElementById("sAlamat").textContent = skl.Alamat || "";
-            // Logo — jika gagal, tampilkan teks pengganti
             const logoEl = document.getElementById("sLogo");
             if (skl.LogoSekolah) {
                 logoEl.src = skl.LogoSekolah;
                 logoEl.style.display = "block";
-                logoEl.onerror = function() {
-                    this.style.display = "none";
-                };
+                logoEl.onerror = function() { this.style.display = "none"; };
             } else {
                 logoEl.style.display = "none";
             }
