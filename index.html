@@ -129,8 +129,10 @@
         .modal h3 { text-align: center; margin-bottom: 1rem; color: #1e3c72; }
         .status-text {
             padding: 1rem; border-radius: 8px; font-weight: bold; text-align: center; margin-bottom: 1rem;
-            background: #fdecea; color: #dc3545;
+            text-transform: uppercase;
         }
+        .status-text.merah { background: #fdecea; color: #dc3545; }
+        .status-text.hijau { background: #e8f5ee; color: #198754; }
         .btn-unduh-surat {
             width: 100%; padding: 0.7rem; background: #198754; color: white; border: none;
             border-radius: 8px; font-weight: 600; cursor: pointer; margin-bottom: 0.7rem; display: none;
@@ -335,7 +337,15 @@
             const ket = (siswa.keterangan || "").toString();
             const munculTombol = /tidak wajib ikut semester/i.test(ket);
             document.getElementById("modalMapel").textContent = siswa.mapel || "-";
-            document.getElementById("modalStatusText").textContent = ket;
+
+            const st = document.getElementById("modalStatusText");
+            st.textContent = ket.toUpperCase();
+            if (/tidak wajib ikut semester/i.test(ket)) {
+                st.className = "status-text hijau";
+            } else {
+                st.className = "status-text merah";
+            }
+            
             document.getElementById("modalNilai").textContent =
                 `Raport: ${siswa.raport || '-'} | Tugas: ${siswa.tugas || '-'} | Ulangan: ${siswa.ulangan || '-'} | Semester: ${siswa.semester || '-'}`;
             document.getElementById("btnUnduhSuratModal").classList.toggle("show", munculTombol);
