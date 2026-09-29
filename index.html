@@ -313,7 +313,7 @@
             const tbody = document.getElementById("tabelDetail");
             tbody.innerHTML = "";
             hasil.forEach((s, i) => {
-                const bintang = "★".repeat(parseInt(s.bintang) || 0);
+                const bintang = (s.bintang !== "" && s.bintang !== undefined) ? "★ " + s.bintang : "-";
                 tbody.innerHTML += `
                     <tr>
                         <td>${s.nama}</td><td>${s.kelas}</td><td>${s.mapel}</td>
