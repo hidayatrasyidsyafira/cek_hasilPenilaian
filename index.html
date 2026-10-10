@@ -23,7 +23,7 @@
         .foto-siswa { width: 140px; height: 140px; object-fit: cover; border-radius: 50%; margin: 0 auto 1rem; border: 3px solid #2a5298; background: #eef2f7; display: block; }
         .info-row { margin: 0.7rem 0; padding-bottom: 0.7rem; border-bottom: 1px dashed #ddd; text-align: left; }
         .info-row strong { display: inline-block; width: 150px; color: #1e3c72; }
-        .nilai-badge { display: inline-block; background: #2a5298; color: white; padding: 0.3rem 1rem; border-radius: 20px; font-weight: bold; }
+        .nilai-badge { display: inline-block; background: #2a5298; color: white; padding: 0.3rem 1rem; border-radius: 20px; font-weight: bold; min-width: 40px; }
         .btn-detail { margin-top: 1.2rem; padding: 0.85rem 2rem; background: #f5a623; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
         table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 1rem; }
         th, td { padding: 0.7rem 0.4rem; text-align: center; border-bottom: 1px solid #eee; }
@@ -221,6 +221,10 @@
         const URL_SKRIP = "https://script.google.com/macros/s/AKfycbxBHWxpKwstOjntbk5Z7rYWTKInWk0OlQWTbTbEfvvAVsyIJ1VfpXdq6mKgXnWVThX7/exec";
         const BASE_FOTO = "https://raw.githubusercontent.com/hidayatrasyidsyafira/fotosiswaSMAN9/main/";
         const EKSTENSI_FOTO = ".JPG";
+
+        // === HELPER: tampilkan angka 0 apa adanya, kosong jadi "-" ===
+        const tampil = x => (x === "" || x === undefined || x === null) ? "-" : x;
+
         function getFotoURL(siswa) {
             if (siswa.foto && String(siswa.foto).trim() !== '') return siswa.foto;
             return BASE_FOTO + String(siswa.nisn).trim() + EKSTENSI_FOTO;
@@ -260,17 +264,17 @@
             document.getElementById("vnama").textContent = d.nama;
             document.getElementById("vkelas").textContent = d.kelas;
             document.getElementById("vmapel").textContent = hasil.map(s => s.mapel).join(", ");
-            document.getElementById("vraport").textContent = d.raport || "-";
+            document.getElementById("vraport").textContent = tampil(d.raport);
             const tbody = document.getElementById("tabelDetail");
             tbody.innerHTML = "";
             hasil.forEach((s, i) => {
-                const bintang = (s.bintang !== "" && s.bintang !== undefined) ? "★ " + s.bintang : "-";
+                const bintang = (s.bintang !== "" && s.bintang !== undefined && s.bintang !== null) ? "★ " + s.bintang : "-";
                 tbody.innerHTML += `
                     <tr>
                         <td>${s.nama}</td><td>${s.kelas}</td><td>${s.mapel}</td>
-                        <td><span class="nilai-link" onclick="bukaTugas('${s.nisn}','${s.mapel}')">${s.tugas ?? '-'}</span></td>
-                        <td><span class="nilai-link" onclick="bukaUlangan('${s.nisn}','${s.mapel}')">${s.ulangan ?? '-'}</span></td>
-                        <td>${s.semester}</td>
+                        <td><span class="nilai-link" onclick="bukaTugas('${s.nisn}','${s.mapel}')">${tampil(s.tugas)}</span></td>
+                        <td><span class="nilai-link" onclick="bukaUlangan('${s.nisn}','${s.mapel}')">${tampil(s.ulangan)}</span></td>
+                        <td>${tampil(s.semester)}</td>
                         <td class="bintang">${bintang}</td>
                         <td><button class="btn-status" onclick="cekStatus(${i})">Cek Status</button></td>
                     </tr>`;
@@ -295,20 +299,19 @@
                 tbody.innerHTML = '<tr><td colspan="11" style="padding:1rem;color:#666;">Data rincian tugas tidak ditemukan</td></tr>';
             } else {
                 filter.forEach((r, idx) => {
-                    const sel = `dataRincian.filter(x=>x.nisn==='${r.nisn}'&&x.mapel==='${r.mapel}')[${idx}]`;
                     tbody.innerHTML += `
                         <tr>
-                            <td>${r.no ?? '-'}</td>
-                            <td>${r.nisn ?? '-'}</td>
-                            <td>${r.nama ?? '-'}</td>
-                            <td>${r.kelas ?? '-'}</td>
-                            <td>${r.mapel ?? '-'}</td>
-                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},1,'${r.nisn}','${r.mapel}')">${r.tugas1 || '-'}<span class="tooltip-text">${r.jenis1 || 'Jenis Tugas 1'}</span></td>
-                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},2,'${r.nisn}','${r.mapel}')">${r.tugas2 || '-'}<span class="tooltip-text">${r.jenis2 || 'Jenis Tugas 2'}</span></td>
-                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},3,'${r.nisn}','${r.mapel}')">${r.tugas3 || '-'}<span class="tooltip-text">${r.jenis3 || 'Jenis Tugas 3'}</span></td>
-                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},4,'${r.nisn}','${r.mapel}')">${r.tugas4 || '-'}<span class="tooltip-text">${r.jenis4 || 'Jenis Tugas 4'}</span></td>
-                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},5,'${r.nisn}','${r.mapel}')">${r.tugas5 || '-'}<span class="tooltip-text">${r.jenis5 || 'Jenis Tugas 5'}</span></td>
-                            <td class="rata-highlight">${r.rataTugas ?? '-'}</td>
+                            <td>${tampil(r.no)}</td>
+                            <td>${r.nisn}</td>
+                            <td>${r.nama}</td>
+                            <td>${r.kelas}</td>
+                            <td>${r.mapel}</td>
+                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},1,'${r.nisn}','${r.mapel}')">${tampil(r.tugas1)}<span class="tooltip-text">${r.jenis1 || 'Jenis Tugas 1'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},2,'${r.nisn}','${r.mapel}')">${tampil(r.tugas2)}<span class="tooltip-text">${r.jenis2 || 'Jenis Tugas 2'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},3,'${r.nisn}','${r.mapel}')">${tampil(r.tugas3)}<span class="tooltip-text">${r.jenis3 || 'Jenis Tugas 3'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},4,'${r.nisn}','${r.mapel}')">${tampil(r.tugas4)}<span class="tooltip-text">${r.jenis4 || 'Jenis Tugas 4'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},5,'${r.nisn}','${r.mapel}')">${tampil(r.tugas5)}<span class="tooltip-text">${r.jenis5 || 'Jenis Tugas 5'}</span></td>
+                            <td class="rata-highlight">${tampil(r.rataTugas)}</td>
                         </tr>`;
                 });
             }
@@ -329,17 +332,17 @@
                 filter.forEach(r => {
                     tbody.innerHTML += `
                         <tr>
-                            <td>${r.no ?? '-'}</td>
-                            <td>${r.nisn ?? '-'}</td>
-                            <td>${r.nama ?? '-'}</td>
-                            <td>${r.kelas ?? '-'}</td>
-                            <td>${r.mapel ?? '-'}</td>
-                            <td>${r.ulangan1 ?? '-'}</td>
-                            <td>${r.ulangan2 ?? '-'}</td>
-                            <td>${r.ulangan3 ?? '-'}</td>
-                            <td>${r.ulangan4 ?? '-'}</td>
-                            <td>${r.ulangan5 ?? '-'}</td>
-                            <td class="rata-highlight">${r.rataUlangan ?? '-'}</td>
+                            <td>${tampil(r.no)}</td>
+                            <td>${r.nisn}</td>
+                            <td>${r.nama}</td>
+                            <td>${r.kelas}</td>
+                            <td>${r.mapel}</td>
+                            <td>${tampil(r.ulangan1)}</td>
+                            <td>${tampil(r.ulangan2)}</td>
+                            <td>${tampil(r.ulangan3)}</td>
+                            <td>${tampil(r.ulangan4)}</td>
+                            <td>${tampil(r.ulangan5)}</td>
+                            <td class="rata-highlight">${tampil(r.rataUlangan)}</td>
                         </tr>`;
                 });
             }
@@ -382,7 +385,7 @@
             st.textContent = ket.toUpperCase();
             st.className = "status-text " + (/tidak wajib ikut semester/i.test(ket) ? "hijau" : "merah");
             document.getElementById("modalNilai").textContent =
-                `Raport: ${siswa.raport || '-'} | Tugas: ${siswa.tugas || '-'} | Ulangan: ${siswa.ulangan || '-'} | Semester: ${siswa.semester || '-'}`;
+                `Raport: ${tampil(siswa.raport)} | Tugas: ${tampil(siswa.tugas)} | Ulangan: ${tampil(siswa.ulangan)} | Semester: ${tampil(siswa.semester)}`;
             document.getElementById("btnUnduhSuratModal").classList.toggle("show", munculTombol);
             document.getElementById("modalStatus").style.display = "flex";
         }
