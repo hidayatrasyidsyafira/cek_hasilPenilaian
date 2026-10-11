@@ -230,7 +230,12 @@
         const EKSTENSI_FOTO = ".JPG";
 
         // HELPER: tampilkan angka 0 apa adanya, kosong jadi "-"
-        const tampil = x => (x === "" || x === undefined || x === null) ? "-" : x;
+        const tampil = x => {
+            if (x === "" || x === undefined || x === null) return "-";
+            const n = Number(x);
+            if (isNaN(n)) return x;
+            return Math.round(n * 100) / 100;  // 21.6666... → 21.67
+        };
 
         function getFotoURL(siswa) {
             if (siswa.foto && String(siswa.foto).trim() !== '') return siswa.foto;
@@ -352,11 +357,11 @@
                             <td>${r.nama}</td>
                             <td>${r.kelas}</td>
                             <td>${r.mapel}</td>
-                            <td>${tampil(r.ulangan1)}</td>
-                            <td>${tampil(r.ulangan2)}</td>
-                            <td>${tampil(r.ulangan3)}</td>
-                            <td>${tampil(r.ulangan4)}</td>
-                            <td>${tampil(r.ulangan5)}</td>
+                            <td class="tooltip-cell">${tampil(r.ulangan1)}<span class="tooltip-text">${r.ketUlangan1 || 'Keterangan Ulangan 1'}</span></td>
+                            <td class="tooltip-cell">${tampil(r.ulangan2)}<span class="tooltip-text">${r.ketUlangan2 || 'Keterangan Ulangan 2'}</span></td>
+                            <td class="tooltip-cell">${tampil(r.ulangan3)}<span class="tooltip-text">${r.ketUlangan3 || 'Keterangan Ulangan 3'}</span></td>
+                            <td class="tooltip-cell">${tampil(r.ulangan4)}<span class="tooltip-text">${r.ketUlangan4 || 'Keterangan Ulangan 4'}</span></td>
+                            <td class="tooltip-cell">${tampil(r.ulangan5)}<span class="tooltip-text">${r.ketUlangan5 || 'Keterangan Ulangan 5'}</span></td>
                             <td class="rata-highlight">${tampil(r.rataUlangan)}</td>
                         </tr>`;
                 });
