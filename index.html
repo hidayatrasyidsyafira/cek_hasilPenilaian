@@ -365,6 +365,7 @@
         }
 
         // === POPUP FOTO TUGAS ===
+        // === POPUP FOTO TUGAS ===
         function bukaFotoTugas(idx, noTugas, nisn, mapel) {
             const r = dataRincian.filter(x =>
                 String(x.nisn).trim() === String(nisn).trim() &&
@@ -373,26 +374,37 @@
             if (!r) return;
             const fotoURL = r['foto' + noTugas] || "";
             const jenis = r['jenis' + noTugas] || "";
+        
+            // Cek HANYA jenis tugas yang sedang diklik ini
+            const iniBelumDikumpul = /belum dikumpul/i.test(String(jenis || ""));
+        
             document.getElementById("fotoJudul").textContent = "Foto Tugas " + noTugas;
             document.getElementById("fotoKeterangan").textContent = jenis ? ("Jenis: " + jenis) : "";
             const img = document.getElementById("fotoTugasImg");
             const kosong = document.getElementById("fotoKosong");
             const btnUnduh = document.getElementById("btnUnduhFoto");
+        
             if (fotoURL) {
                 img.style.display = "block";
                 kosong.style.display = "none";
                 img.src = fotoURL;
                 urlFotoSaatIni = fotoURL;
-                btnUnduh.classList.add("show");
             } else {
                 img.style.display = "none";
                 kosong.style.display = "block";
+                kosong.textContent = iniBelumDikumpul ? "Tugas belum dikumpul" : "Foto tugas belum tersedia";
                 urlFotoSaatIni = "";
+            }
+        
+            // Tombol download: AKTIF jika tugas ini "belum dikumpul", selain itu disembunyikan
+            if (iniBelumDikumpul) {
+                btnUnduh.classList.add("show");
+            } else {
                 btnUnduh.classList.remove("show");
             }
+        
             document.getElementById("modalFoto").style.display = "flex";
         }
-
         // === DOWNLOAD FOTO TUGAS (via blob agar pasti terunduh) ===
         async function unduhFotoTugas() {
             if (!urlFotoSaatIni) return;
