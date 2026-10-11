@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cek Hasil Nilai Semester</title>
+    <style>
+        @page { size: A4; margin: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Times New Roman', serif; }
+        body { background: linear-gradient(135deg, #1e3c72, #2a5298); min-height: 100vh; padding: 2rem 1rem; }
+        .container { max-width: 950px; margin: 0 auto; background: #fff; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); overflow: hidden; }
+        .header { background: #1e3c72; color: white; padding: 2rem; text-align: center; }
+        .form-section { padding: 2rem; }
+        .input-group { margin-bottom: 1.5rem; }
+        label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #333; }
+        input { width: 100%; padding: 0.9rem; font-size: 1rem; border: 2px solid #ddd; border-radius: 8px; }
+        input:focus { outline: none; border-color: #2a5298; }
+        .btn-primary { width: 100%; padding: 1rem; background: #2a5298; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+        .loading, .error { text-align: center; padding: 1rem; display: none; }
+        .loading { color: #2a5298; } .error { color: #dc3545; }
+        .result-box { padding: 0 2rem 2rem; display: none; }
+        .card { border: 1px solid #eee; border-radius: 12px; padding: 1.5rem; background: #f9fbfd; text-align: center; margin-bottom: 1.5rem; }
+        .foto-siswa { width: 140px; height: 140px; object-fit: cover; border-radius: 50%; margin: 0 auto 1rem; border: 3px solid #2a5298; background: #eef2f7; display: block; }
+        .info-row { margin: 0.7rem 0; padding-bottom: 0.7rem; border-bottom: 1px dashed #ddd; text-align: left; }
+        .info-row strong { display: inline-block; width: 150px; color: #1e3c72; }
+        .nilai-badge { display: inline-block; background: #2a5298; color: white; padding: 0.3rem 1rem; border-radius: 20px; font-weight: bold; min-width: 40px; }
+        .btn-detail { margin-top: 1.2rem; padding: 0.85rem 2rem; background: #f5a623; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 1rem; }
+        th, td { padding: 0.7rem 0.4rem; text-align: center; border-bottom: 1px solid #eee; }
+        th { background: #2a5298; color: white; }
+        .bintang { color: #f5a623; }
+        .btn-status { background: #198754; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; }
+        .nilai-link { color: #2a5298; font-weight: bold; cursor: pointer; text-decoration: underline; }
+        .nilai-link:hover { color: #f5a623; }
+
+        /* Tooltip */
+        .tooltip-cell { position: relative; cursor: pointer; }
+        .tooltip-text {
+            visibility: hidden; position: absolute; z-index: 100; bottom: 125%; left: 50%;
+            transform: translateX(-50%); background: #333; color: #fff; text-align: center;
+            padding: 0.5rem 0.8rem; border-radius: 6px; font-size: 0.85rem; white-space: nowrap;
+            opacity: 0; transition: opacity 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .tooltip-cell:hover .tooltip-text { visibility: visible; opacity: 1; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 999; padding: 1rem; }
+        .modal { background: white; border-radius: 12px; padding: 1.5rem; max-width: 450px; width: 100%; max-height: 90vh; overflow-y: auto; }
+        .modal-lebar { max-width: 1100px; width: 98%; }
+        .modal h3 { text-align: center; margin-bottom: 1rem; color: #1e3c72; }
+        .status-text { padding: 1rem; border-radius: 8px; font-weight: bold; text-align: center; margin-bottom: 1rem; text-transform: uppercase; }
+        .status-text.merah { background: #fdecea; color: #dc3545; }
+        .status-text.hijau { background: #e8f5ee; color: #198754; }
+        .btn-unduh-surat { width: 100%; padding: 0.7rem; background: #198754; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-bottom: 0.7rem; display: none; }
+        .btn-unduh-surat.show { display: block; }
+        .btn-tutup { width: 100%; padding: 0.7rem; background: #2a5298; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 1rem; }
+        .modal-table { margin-top: 0.5rem; }
+        .modal-table th { font-size: 0.78rem; padding: 0.5rem 0.3rem; }
+        .modal-table td { font-size: 0.85rem; padding: 0.5rem 0.3rem; }
+        .rata-highlight { background: #e8f5ee !important; font-weight: bold; }
+        .table-wrap { overflow-x: auto; }
+
+        /* Modal Foto Tugas */
+        .foto-tugas-img { max-width: 100%; max-height: 60vh; border-radius: 8px; display: block; margin: 0 auto; }
+        .foto-keterangan { text-align: center; margin-top: 0.8rem; color: #555; font-size: 0.95rem; }
+        .btn-unduh-foto {
+            width: 100%; padding: 0.7rem; background: #f5a623; color: white; border: none;
+            border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 1rem; display: none;
+        }
+        .btn-unduh-foto.show { display: block; }
+        .btn-unduh-foto:hover { background: #e09412; }
+
+        .surat-ket { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; padding: 2rem; z-index: 1000; overflow-y: auto; }
+        .isi-surat { max-width: 700px; margin: 0 auto; font-family: 'Times New Roman', serif; line-height: 1.8; }
+        .kepala { text-align: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #000; }
+        .logo { width: 90px; height: 90px; object-fit: contain; margin: 0 auto 0.5rem; display: block; }
+        .kepala-teks h2 { font-size: 1.3rem; text-transform: uppercase; }
+        .alamat { font-size: 0.9rem; }
+        .judul-surat { text-align: center; font-weight: bold; text-decoration: underline; margin: 1.5rem 0; }
+        .isi { text-align: justify; }
+        .data-siswa { margin: 1rem 0 1rem 2rem; }
+        .ttd { margin-top: 3rem; text-align: right; }
+        .btn-tutup-surat { position: fixed; top: 1rem; right: 1rem; padding: 0.5rem 1.5rem; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; z-index: 1001; }
+        @media print {
+            body * { visibility: hidden; }
+            .surat-ket, .surat-ket * { visibility: visible; }
+            .surat-ket { position: absolute; left: 0; top: 0; padding: 2cm; width: 100%; }
+            .btn-tutup-surat { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Cek Hasil Nilai Semester</h1>
+            <p>Masukkan NISN untuk melihat data</p>
+        </div>
+        <div class="form-section">
+            <div class="input-group">
+                <label for="nisn">NISN</label>
+                <input type="text" id="nisn" placeholder="Masukkan NISN...">
+            </div>
+            <button class="btn-primary" onclick="cekNilai()">Cek Hasil Nilai</button>
+            <div class="loading" id="loading">Sedang mencari data...</div>
+            <div class="error" id="errorMsg">NISN tidak ditemukan</div>
+        </div>
+        <div class="result-box" id="hasil">
+            <div class="card">
+                <img id="foto" src="" alt="Foto Siswa" class="foto-siswa">
+                <div class="info-row"><strong>NISN:</strong> <span id="vnisn"></span></div>
+                <div class="info-row"><strong>Nama:</strong> <span id="vnama"></span></div>
+                <div class="info-row"><strong>Kelas:</strong> <span id="vkelas"></span></div>
+                <div class="info-row"><strong>Mata Pelajaran:</strong> <span id="vmapel"></span></div>
+                <div class="info-row"><strong>Nilai Raport:</strong> <span class="nilai-badge" id="vraport"></span></div>
+                <button class="btn-detail" onclick="toggleDetail()">Cek Detail Nilai</button>
+            </div>
+            <div id="detailSection" style="display:none;">
+                <h3>Detail Nilai</h3>
+                <table>
+                    <thead>
+                        <tr><th>Nama</th><th>Kelas</th><th>Mapel</th><th>Tugas</th><th>Ulangan</th><th>Semester</th><th>Bintang</th><th>Status</th></tr>
+                    </thead>
+                    <tbody id="tabelDetail"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Rincian Tugas (Tugas 1-5) -->
+    <div class="modal-overlay" id="modalTugas">
+        <div class="modal modal-lebar">
+            <h3>Rincian Nilai Tugas</h3>
+            <div class="table-wrap">
+                <table class="modal-table">
+                    <thead>
+                        <tr>
+                            <th>No</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Mapel</th>
+                            <th>Tugas 1</th><th>Tugas 2</th><th>Tugas 3</th><th>Tugas 4</th><th>Tugas 5</th>
+                            <th>Rata-Rata</th>
+                        </tr>
+                    </thead>
+                    <tbody id="isiTugas"></tbody>
+                </table>
+            </div>
+            <p style="text-align:center; color:#888; font-size:0.8rem; margin-top:0.5rem;">Arahkan kursor untuk lihat Jenis Tugas • Klik nilai untuk lihat Foto Tugas</p>
+            <button class="btn-tutup" onclick="tutupModal('modalTugas')">Tutup</button>
+        </div>
+    </div>
+
+    <!-- Modal Rincian Ulangan (Ulangan 1-5) -->
+    <div class="modal-overlay" id="modalUlangan">
+        <div class="modal modal-lebar">
+            <h3>Rincian Nilai Ulangan</h3>
+            <div class="table-wrap">
+                <table class="modal-table">
+                    <thead>
+                        <tr>
+                            <th>No</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Mapel</th>
+                            <th>Ulangan 1</th><th>Ulangan 2</th><th>Ulangan 3</th><th>Ulangan 4</th><th>Ulangan 5</th>
+                            <th>Rata-Rata</th>
+                        </tr>
+                    </thead>
+                    <tbody id="isiUlangan"></tbody>
+                </table>
+            </div>
+            <button class="btn-tutup" onclick="tutupModal('modalUlangan')">Tutup</button>
+        </div>
+    </div>
+
+    <!-- Modal Foto Tugas + Tombol Download -->
+    <div class="modal-overlay" id="modalFoto">
+        <div class="modal">
+            <h3 id="fotoJudul">Foto Tugas</h3>
+            <img id="fotoTugasImg" src="" alt="Foto Tugas" class="foto-tugas-img"
+                 onerror="this.style.display='none'; document.getElementById('fotoKosong').style.display='block';">
+            <p id="fotoKosong" style="display:none; text-align:center; color:#999; padding:2rem;">Foto tugas belum tersedia</p>
+            <p class="foto-keterangan" id="fotoKeterangan"></p>
+            <button class="btn-unduh-foto" id="btnUnduhFoto" onclick="unduhFotoTugas()">⬇️ Download Foto</button>
+            <button class="btn-tutup" onclick="tutupModal('modalFoto')">Tutup</button>
+        </div>
+    </div>
+
+    <!-- Modal Status -->
+    <div class="modal-overlay" id="modalStatus">
+        <div class="modal">
+            <h3>Status Kelulusan</h3>
+            <p style="color:#666;">Mata Pelajaran: <span id="modalMapel"></span></p>
+            <div class="status-text" id="modalStatusText"></div>
+            <p style="color:#555; font-size:0.9rem; margin-bottom:1rem;" id="modalNilai"></p>
+            <button class="btn-unduh-surat" id="btnUnduhSuratModal" onclick="unduhSurat()">📄 Download Surat Keterangan</button>
+            <button class="btn-tutup" onclick="tutupModal('modalStatus')">Tutup</button>
+        </div>
+    </div>
+
+    <!-- Surat Keterangan -->
+    <div class="surat-ket" id="suratKet">
+        <button class="btn-tutup-surat" onclick="tutupSurat()">✕ Tutup</button>
+        <div class="isi-surat">
+            <div class="kepala">
+                <img id="sLogo" src="" alt="Logo Sekolah" class="logo">
+                <div class="kepala-teks">
+                    <h2 id="sNamaSekolah"></h2>
+                    <p class="alamat" id="sAlamat"></p>
+                </div>
+            </div>
+            <h3 class="judul-surat">SURAT KETERANGAN</h3>
+            <div class="isi">
+                <p>Yang bertanda tangan di bawah ini, Guru <span id="sNamaSekolah2"></span>, menerangkan bahwa:</p>
+                <div class="data-siswa">
+                    <p><strong>Nama</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <span id="sNama"></span></p>
+                    <p><strong>NISN</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <span id="sNisn"></span></p>
+                    <p><strong>Kelas</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <span id="sKelas"></span></p>
+                    <p><strong>Mata Pelajaran</strong> : <span id="sMapel"></span></p>
+                </div>
+                <p>Berdasarkan hasil penilaian semester, siswa tersebut dinyatakan memenuhi syarat dan <strong>tidak wajib mengikuti ujian/ulangan semester</strong> untuk mata pelajaran di atas.</p>
+                <p>Demikian surat keterangan ini dibuat untuk dapat dipergunakan sebagaimana mestinya.</p>
+            </div>
+            <div class="ttd">
+                <p><span id="sTempat"></span>, <span id="sTanggal"></span></p>
+                <p>Guru Mapel,</p>
+                <br><br><br>
+                <p style="font-weight:bold; text-decoration:underline;" id="sNamaGuru"></p>
+                <p>NIP. <span id="sNIP"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const URL_SKRIP = "https://script.google.com/macros/s/AKfycbxBHWxpKwstOjntbk5Z7rYWTKInWk0OlQWTbTbEfvvAVsyIJ1VfpXdq6mKgXnWVThX7/exec";
+        const BASE_FOTO = "https://raw.githubusercontent.com/hidayatrasyidsyafira/fotosiswaSMAN9/main/";
+        const EKSTENSI_FOTO = ".JPG";
+
+        // HELPER: tampilkan angka 0 apa adanya, kosong jadi "-"
+        const tampil = x => (x === "" || x === undefined || x === null) ? "-" : x;
+
+        function getFotoURL(siswa) {
+            if (siswa.foto && String(siswa.foto).trim() !== '') return siswa.foto;
+            return BASE_FOTO + String(siswa.nisn).trim() + EKSTENSI_FOTO;
+        }
+        let dataUtama = [], dataRincian = [], dataSekolah = {}, nisnSaatIni = "", dataMapelSaatIni = null;
+        let urlFotoSaatIni = "";
+
+        // === FETCH ANTI-ERROR + ANTI-CACHE ===
+        async function cekNilai() {
+            const nisn = document.getElementById("nisn").value.trim();
+            if (!nisn) return alert("Masukkan NISN terlebih dahulu!");
+            document.getElementById("hasil").style.display = "none";
+            document.getElementById("errorMsg").style.display = "none";
+            document.getElementById("loading").style.display = "block";
+            try {
+                const res = await fetch(URL_SKRIP + "?t=" + Date.now());
+                const teks = await res.text();
+                let json;
+                try {
+                    json = JSON.parse(teks);
+                } catch (e) {
+                    throw new Error("Server sedang sibuk. Coba klik tombol lagi 1-2 kali, atau refresh halaman.");
+                }
+                if (json.error) throw new Error(json.error);
+                dataUtama = json.utama || [];
+                dataRincian = json.rincian || [];
+                dataSekolah = json.sekolah || {};
+                nisnSaatIni = nisn;
+                const hasil = dataUtama.filter(s => String(s.nisn).trim() === nisn);
+                document.getElementById("loading").style.display = "none";
+                if (hasil.length > 0) tampilkanHasil(hasil);
+                else document.getElementById("errorMsg").style.display = "block";
+            } catch (err) {
+                document.getElementById("loading").style.display = "none";
+                alert("Error: " + err.message);
+            }
+        }
+
+        function tampilkanHasil(hasil) {
+            const d = hasil[0];
+            const fotoEl = document.getElementById("foto");
+            fotoEl.src = getFotoURL(d);
+            fotoEl.onerror = function() { this.src = ""; this.alt = "Foto tidak tersedia"; };
+            document.getElementById("vnisn").textContent = d.nisn;
+            document.getElementById("vnama").textContent = d.nama;
+            document.getElementById("vkelas").textContent = d.kelas;
+            document.getElementById("vmapel").textContent = hasil.map(s => s.mapel).join(", ");
+            document.getElementById("vraport").textContent = tampil(d.raport);
+            const tbody = document.getElementById("tabelDetail");
+            tbody.innerHTML = "";
+            hasil.forEach((s, i) => {
+                const bintang = (s.bintang !== "" && s.bintang !== undefined && s.bintang !== null) ? "★ " + s.bintang : "-";
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${s.nama}</td><td>${s.kelas}</td><td>${s.mapel}</td>
+                        <td><span class="nilai-link" onclick="bukaTugas('${s.nisn}','${s.mapel}')">${tampil(s.tugas)}</span></td>
+                        <td><span class="nilai-link" onclick="bukaUlangan('${s.nisn}','${s.mapel}')">${tampil(s.ulangan)}</span></td>
+                        <td>${tampil(s.semester)}</td>
+                        <td class="bintang">${bintang}</td>
+                        <td><button class="btn-status" onclick="cekStatus(${i})">Cek Status</button></td>
+                    </tr>`;
+            });
+            document.getElementById("hasil").style.display = "block";
+        }
+
+        function toggleDetail() {
+            const sec = document.getElementById("detailSection");
+            sec.style.display = sec.style.display === "block" ? "none" : "block";
+        }
+
+        // === RINCIAN TUGAS 1-5 + tooltip Jenis + klik Foto ===
+        function bukaTugas(nisn, mapel) {
+            const filter = dataRincian.filter(r =>
+                String(r.nisn).trim() === String(nisn).trim() &&
+                String(r.mapel).trim() === String(mapel).trim()
+            );
+            const tbody = document.getElementById("isiTugas");
+            tbody.innerHTML = "";
+            if (filter.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" style="padding:1rem;color:#666;">Data rincian tugas tidak ditemukan</td></tr>';
+            } else {
+                filter.forEach((r, idx) => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${tampil(r.no)}</td>
+                            <td>${r.nisn}</td>
+                            <td>${r.nama}</td>
+                            <td>${r.kelas}</td>
+                            <td>${r.mapel}</td>
+                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},1,'${r.nisn}','${r.mapel}')">${tampil(r.tugas1)}<span class="tooltip-text">${r.jenis1 || 'Jenis Tugas 1'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},2,'${r.nisn}','${r.mapel}')">${tampil(r.tugas2)}<span class="tooltip-text">${r.jenis2 || 'Jenis Tugas 2'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},3,'${r.nisn}','${r.mapel}')">${tampil(r.tugas3)}<span class="tooltip-text">${r.jenis3 || 'Jenis Tugas 3'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},4,'${r.nisn}','${r.mapel}')">${tampil(r.tugas4)}<span class="tooltip-text">${r.jenis4 || 'Jenis Tugas 4'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},5,'${r.nisn}','${r.mapel}')">${tampil(r.tugas5)}<span class="tooltip-text">${r.jenis5 || 'Jenis Tugas 5'}</span></td>
+                            <td class="rata-highlight">${tampil(r.rataTugas)}</td>
+                        </tr>`;
+                });
+            }
+            document.getElementById("modalTugas").style.display = "flex";
+        }
+
+        // === RINCIAN ULANGAN 1-5 ===
+        function bukaUlangan(nisn, mapel) {
+            const filter = dataRincian.filter(r =>
+                String(r.nisn).trim() === String(nisn).trim() &&
+                String(r.mapel).trim() === String(mapel).trim()
+            );
+            const tbody = document.getElementById("isiUlangan");
+            tbody.innerHTML = "";
+            if (filter.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" style="padding:1rem;color:#666;">Data rincian ulangan tidak ditemukan</td></tr>';
+            } else {
+                filter.forEach(r => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${tampil(r.no)}</td>
+                            <td>${r.nisn}</td>
+                            <td>${r.nama}</td>
+                            <td>${r.kelas}</td>
+                            <td>${r.mapel}</td>
+                            <td>${tampil(r.ulangan1)}</td>
+                            <td>${tampil(r.ulangan2)}</td>
+                            <td>${tampil(r.ulangan3)}</td>
+                            <td>${tampil(r.ulangan4)}</td>
+                            <td>${tampil(r.ulangan5)}</td>
+                            <td class="rata-highlight">${tampil(r.rataUlangan)}</td>
+                        </tr>`;
+                });
+            }
+            document.getElementById("modalUlangan").style.display = "flex";
+        }
+
+        // === POPUP FOTO TUGAS ===
+        function bukaFotoTugas(idx, noTugas, nisn, mapel) {
+            const r = dataRincian.filter(x =>
+                String(x.nisn).trim() === String(nisn).trim() &&
+                String(x.mapel).trim() === String(mapel).trim()
+            )[idx];
+            if (!r) return;
+            const fotoURL = r['foto' + noTugas] || "";
+            const jenis = r['jenis' + noTugas] || "";
+            document.getElementById("fotoJudul").textContent = "Foto Tugas " + noTugas;
+            document.getElementById("fotoKeterangan").textContent = jenis ? ("Jenis: " + jenis) : "";
+            const img = document.getElementById("fotoTugasImg");
+            const kosong = document.getElementById("fotoKosong");
+            const btnUnduh = document.getElementById("btnUnduhFoto");
+            if (fotoURL) {
+                img.style.display = "block";
+                kosong.style.display = "none";
+                img.src = fotoURL;
+                urlFotoSaatIni = fotoURL;
+                btnUnduh.classList.add("show");
+            } else {
+                img.style.display = "none";
+                kosong.style.display = "block";
+                urlFotoSaatIni = "";
+                btnUnduh.classList.remove("show");
+            }
+            document.getElementById("modalFoto").style.display = "flex";
+        }
+
+        // === DOWNLOAD FOTO TUGAS (via blob agar pasti terunduh) ===
+        async function unduhFotoTugas() {
+            if (!urlFotoSaatIni) return;
+            const btn = document.getElementById("btnUnduhFoto");
+            const teksAsli = btn.textContent;
+            btn.textContent = "⏳ Sedang mengunduh...";
+            btn.disabled = true;
+            try {
+                const res = await fetch(urlFotoSaatIni);
+                const blob = await res.blob();
+                const urlObj = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = urlObj;
+                a.download = "foto-tugas.jpg";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(urlObj);
+                btn.textContent = "✅ Berhasil diunduh!";
+                setTimeout(() => { btn.textContent = teksAsli; btn.disabled = false; }, 1500);
+            } catch (err) {
+                window.open(urlFotoSaatIni, "_blank");
+                btn.textContent = teksAsli;
+                btn.disabled = false;
+            }
+        }
+
+        function cekStatus(index) {
+            const hasilSiswa = dataUtama.filter(s => String(s.nisn).trim() === nisnSaatIni);
+            const siswa = hasilSiswa[index];
+            if (!siswa) return;
+            dataMapelSaatIni = siswa;
+            const ket = (siswa.keterangan || "").toString();
+            const munculTombol = /tidak wajib ikut semester/i.test(ket);
+            document.getElementById("modalMapel").textContent = siswa.mapel || "-";
+            const st = document.getElementById("modalStatusText");
+            st.textContent = ket.toUpperCase();
+            st.className = "status-text " + (/tidak wajib ikut semester/i.test(ket) ? "hijau" : "merah");
+            document.getElementById("modalNilai").textContent =
+                `Raport: ${tampil(siswa.raport)} | Tugas: ${tampil(siswa.tugas)} | Ulangan: ${tampil(siswa.ulangan)} | Semester: ${tampil(siswa.semester)}`;
+            document.getElementById("btnUnduhSuratModal").classList.toggle("show", munculTombol);
+            document.getElementById("modalStatus").style.display = "flex";
+        }
+
+        function tutupModal(id) { document.getElementById(id).style.display = "none"; }
+
+        function unduhSurat() {
+            if (!dataMapelSaatIni) return;
+            const s = dataMapelSaatIni;
+            const skl = dataSekolah;
+            document.getElementById("sNamaSekolah").textContent = skl.NamaSekolah || "";
+            document.getElementById("sNamaSekolah2").textContent = skl.NamaSekolah || "";
+            document.getElementById("sAlamat").textContent = skl.Alamat || "";
+            const logoEl = document.getElementById("sLogo");
+            if (skl.LogoSekolah) {
+                logoEl.src = skl.LogoSekolah; logoEl.style.display = "block";
+                logoEl.onerror = function() { this.style.display = "none"; };
+            } else { logoEl.style.display = "none"; }
+            document.getElementById("sTempat").textContent = skl.Tempat || "";
+            document.getElementById("sTanggal").textContent = skl.Tanggal || "";
+            document.getElementById("sNamaGuru").textContent = skl.NamaGuru || "";
+            document.getElementById("sNIP").textContent = skl.NIP || "";
+            document.getElementById("sNama").textContent = s.nama || "-";
+            document.getElementById("sNisn").textContent = s.nisn || "-";
+            document.getElementById("sKelas").textContent = s.kelas || "-";
+            document.getElementById("sMapel").textContent = s.mapel || "-";
+            tutupModal("modalStatus");
+            document.getElementById("suratKet").style.display = "block";
+            window.print();
+        }
+
+        function tutupSurat() { document.getElementById("suratKet").style.display = "none"; }
+
+        document.querySelectorAll(".modal-overlay").forEach(m => {
+            m.addEventListener("click", e => { if (e.target === m) m.style.display = "none"; });
+        });
+    </script>
+</body>
+</html>
