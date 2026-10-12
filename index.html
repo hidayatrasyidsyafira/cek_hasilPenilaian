@@ -349,7 +349,7 @@
             if (filter.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="11" style="padding:1rem;color:#666;">Data rincian ulangan tidak ditemukan</td></tr>';
             } else {
-                filter.forEach(r => {
+                filter.forEach((r, idx) => {
                     tbody.innerHTML += `
                         <tr>
                             <td>${tampil(r.no)}</td>
@@ -357,18 +357,17 @@
                             <td>${r.nama}</td>
                             <td>${r.kelas}</td>
                             <td>${r.mapel}</td>
-                            <td class="tooltip-cell">${tampil(r.ulangan1)}<span class="tooltip-text">${r.ketUlangan1 || 'Keterangan Ulangan 1'}</span></td>
-                            <td class="tooltip-cell">${tampil(r.ulangan2)}<span class="tooltip-text">${r.ketUlangan2 || 'Keterangan Ulangan 2'}</span></td>
-                            <td class="tooltip-cell">${tampil(r.ulangan3)}<span class="tooltip-text">${r.ketUlangan3 || 'Keterangan Ulangan 3'}</span></td>
-                            <td class="tooltip-cell">${tampil(r.ulangan4)}<span class="tooltip-text">${r.ketUlangan4 || 'Keterangan Ulangan 4'}</span></td>
-                            <td class="tooltip-cell">${tampil(r.ulangan5)}<span class="tooltip-text">${r.ketUlangan5 || 'Keterangan Ulangan 5'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoUlangan(${idx},1,'${r.nisn}','${r.mapel}')">${tampil(r.ulangan1)}<span class="tooltip-text">${r.ketUlangan1 || 'Keterangan Ulangan 1'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoUlangan(${idx},2,'${r.nisn}','${r.mapel}')">${tampil(r.ulangan2)}<span class="tooltip-text">${r.ketUlangan2 || 'Keterangan Ulangan 2'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoUlangan(${idx},3,'${r.nisn}','${r.mapel}')">${tampil(r.ulangan3)}<span class="tooltip-text">${r.ketUlangan3 || 'Keterangan Ulangan 3'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoUlangan(${idx},4,'${r.nisn}','${r.mapel}')">${tampil(r.ulangan4)}<span class="tooltip-text">${r.ketUlangan4 || 'Keterangan Ulangan 4'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoUlangan(${idx},5,'${r.nisn}','${r.mapel}')">${tampil(r.ulangan5)}<span class="tooltip-text">${r.ketUlangan5 || 'Keterangan Ulangan 5'}</span></td>
                             <td class="rata-highlight">${tampil(r.rataUlangan)}</td>
                         </tr>`;
                 });
             }
             document.getElementById("modalUlangan").style.display = "flex";
         }
-
         // === POPUP FOTO TUGAS ===
         // === POPUP FOTO TUGAS ===
         function bukaFotoTugas(idx, noTugas, nisn, mapel) {
@@ -410,6 +409,37 @@
         
             document.getElementById("modalFoto").style.display = "flex";
         }
+
+        // === POPUP FOTO ULANGAN ===
+        function bukaFotoUlangan(idx, noUlangan, nisn, mapel) {
+            const r = dataRincian.filter(x =>
+                String(x.nisn).trim() === String(nisn).trim() &&
+                String(x.mapel).trim() === String(mapel).trim()
+            )[idx];
+            if (!r) return;
+            const fotoURL = r['fotoUlangan' + noUlangan] || "";
+            const ket = r['ketUlangan' + noUlangan] || "";
+            document.getElementById("fotoJudul").textContent = "Foto Ulangan " + noUlangan;
+            document.getElementById("fotoKeterangan").textContent = ket ? ("Keterangan: " + ket) : "";
+            const img = document.getElementById("fotoTugasImg");
+            const kosong = document.getElementById("fotoKosong");
+            const btnUnduh = document.getElementById("btnUnduhFoto");
+            if (fotoURL) {
+                img.style.display = "block";
+                kosong.style.display = "none";
+                img.src = fotoURL;
+                urlFotoSaatIni = fotoURL;
+                btnUnduh.classList.add("show");
+            } else {
+                img.style.display = "none";
+                kosong.style.display = "block";
+                kosong.textContent = "Foto ulangan belum tersedia";
+                urlFotoSaatIni = "";
+                btnUnduh.classList.remove("show");
+            }
+            document.getElementById("modalFoto").style.display = "flex";
+        }
+        
         // === DOWNLOAD FOTO TUGAS (via blob agar pasti terunduh) ===
         async function unduhFotoTugas() {
             if (!urlFotoSaatIni) return;
