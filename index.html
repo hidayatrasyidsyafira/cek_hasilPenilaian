@@ -429,14 +429,15 @@
                 kosong.style.display = "none";
                 img.src = fotoURL;
                 urlFotoSaatIni = fotoURL;
-                btnUnduh.classList.add("show");
             } else {
                 img.style.display = "none";
                 kosong.style.display = "block";
                 kosong.textContent = "Foto ulangan belum tersedia";
                 urlFotoSaatIni = "";
-                btnUnduh.classList.remove("show");
             }
+            // Tombol download SELALU disembunyikan untuk foto ulangan
+            btnUnduh.classList.remove("show");
+        
             document.getElementById("modalFoto").style.display = "flex";
         }
         
