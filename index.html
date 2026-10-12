@@ -234,7 +234,7 @@
             if (x === "" || x === undefined || x === null) return "-";
             const n = Number(x);
             if (isNaN(n)) return x;
-            return Math.round(n * 100) / 100;  // 21.6666... → 21.67
+            return Math.round(n);  // 64.33 → 64 | 21.67 → 22
         };
 
         function getFotoURL(siswa) {
