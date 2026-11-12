@@ -32,8 +32,8 @@
         .btn-status { background: #198754; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; }
         .nilai-link { color: #2a5298; font-weight: bold; cursor: pointer; text-decoration: underline; }
         .nilai-link:hover { color: #f5a623; }
+        .praktik-col { color: #7b2cbf; font-weight: bold; }
 
-        /* Tooltip */
         .tooltip-cell { position: relative; cursor: pointer; }
         .tooltip-text {
             visibility: hidden; position: absolute; z-index: 100; bottom: 125%; left: 50%;
@@ -59,7 +59,6 @@
         .rata-highlight { background: #e8f5ee !important; font-weight: bold; }
         .table-wrap { overflow-x: auto; }
 
-        /* Modal Foto Tugas */
         .foto-tugas-img { max-width: 100%; max-height: 60vh; border-radius: 8px; display: block; margin: 0 auto; }
         .foto-keterangan { text-align: center; margin-top: 0.8rem; color: #555; font-size: 0.95rem; }
         .btn-unduh-foto {
@@ -87,7 +86,6 @@
             .btn-tutup-surat { display: none; }
         }
 
-        /* Logo di atas judul */
        .logo-header {
             width: 120px;
             height: auto;
@@ -101,7 +99,6 @@
             border-radius: 8px;
         }
 
-        /* Animasi spinner loading */
         .spinner {
             width: 42px; height: 42px;
             border: 4px solid #e0e0e0;
@@ -147,17 +144,23 @@
             </div>
             <div id="detailSection" style="display:none;">
                 <h3>Detail Nilai</h3>
-                <table>
-                    <thead>
-                        <tr><th>Nama</th><th>Kelas</th><th>Mapel</th><th>Tugas</th><th>Ulangan</th><th>Semester</th><th>Bintang</th><th>Status</th></tr>
-                    </thead>
-                    <tbody id="tabelDetail"></tbody>
-                </table>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nama</th><th>Kelas</th><th>Mapel</th>
+                                <th>Tugas</th><th>Ulangan</th><th>Praktik</th>
+                                <th>Semester</th><th>Raport</th><th>Bintang</th><th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelDetail"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Rincian Tugas (Tugas 1-5) -->
+    <!-- Modal Rincian Tugas -->
     <div class="modal-overlay" id="modalTugas">
         <div class="modal modal-lebar">
             <h3>Rincian Nilai Tugas</h3>
@@ -178,7 +181,7 @@
         </div>
     </div>
 
-    <!-- Modal Rincian Ulangan (Ulangan 1-5) -->
+    <!-- Modal Rincian Ulangan -->
     <div class="modal-overlay" id="modalUlangan">
         <div class="modal modal-lebar">
             <h3>Rincian Nilai Ulangan</h3>
@@ -198,7 +201,7 @@
         </div>
     </div>
 
-    <!-- Modal Foto Tugas + Tombol Download -->
+    <!-- Modal Foto Tugas -->
     <div class="modal-overlay" id="modalFoto">
         <div class="modal">
             <h3 id="fotoJudul">Foto Tugas</h3>
@@ -261,12 +264,11 @@
         const BASE_FOTO = "https://raw.githubusercontent.com/hidayatrasyidsyafira/fotosiswaSMAN9/main/";
         const EKSTENSI_FOTO = ".JPG";
 
-        // HELPER: tampilkan angka 0 apa adanya, kosong jadi "-"
         const tampil = x => {
             if (x === "" || x === undefined || x === null) return "-";
             const n = Number(x);
             if (isNaN(n)) return x;
-            return Math.round(n);  // 64.33 → 64 | 21.67 → 22
+            return Math.round(n);
         };
 
         function getFotoURL(siswa) {
@@ -276,7 +278,6 @@
         let dataUtama = [], dataRincian = [], dataSekolah = {}, nisnSaatIni = "", dataMapelSaatIni = null;
         let urlFotoSaatIni = "";
 
-        // === FETCH ANTI-ERROR + ANTI-CACHE ===
         async function cekNilai() {
             const nisn = document.getElementById("nisn").value.trim();
             if (!nisn) return alert("Masukkan NISN terlebih dahulu!");
@@ -326,7 +327,9 @@
                         <td>${s.nama}</td><td>${s.kelas}</td><td>${s.mapel}</td>
                         <td><span class="nilai-link" onclick="bukaTugas('${s.nisn}','${s.mapel}')">${tampil(s.tugas)}</span></td>
                         <td><span class="nilai-link" onclick="bukaUlangan('${s.nisn}','${s.mapel}')">${tampil(s.ulangan)}</span></td>
+                        <td class="praktik-col">${tampil(s.praktik)}</td>
                         <td>${tampil(s.semester)}</td>
+                        <td>${tampil(s.raport)}</td>
                         <td class="bintang">${bintang}</td>
                         <td><button class="btn-status" onclick="cekStatus(${i})">Cek Status</button></td>
                     </tr>`;
@@ -339,7 +342,6 @@
             sec.style.display = sec.style.display === "block" ? "none" : "block";
         }
 
-        // === RINCIAN TUGAS 1-5 + tooltip Jenis + klik Foto ===
         function bukaTugas(nisn, mapel) {
             const filter = dataRincian.filter(r =>
                 String(r.nisn).trim() === String(nisn).trim() &&
@@ -370,7 +372,6 @@
             document.getElementById("modalTugas").style.display = "flex";
         }
 
-        // === RINCIAN ULANGAN 1-5 ===
         function bukaUlangan(nisn, mapel) {
             const filter = dataRincian.filter(r =>
                 String(r.nisn).trim() === String(nisn).trim() &&
@@ -400,8 +401,7 @@
             }
             document.getElementById("modalUlangan").style.display = "flex";
         }
-        // === POPUP FOTO TUGAS ===
-        // === POPUP FOTO TUGAS ===
+
         function bukaFotoTugas(idx, noTugas, nisn, mapel) {
             const r = dataRincian.filter(x =>
                 String(x.nisn).trim() === String(nisn).trim() &&
@@ -410,16 +410,12 @@
             if (!r) return;
             const fotoURL = r['foto' + noTugas] || "";
             const jenis = r['jenis' + noTugas] || "";
-        
-            // Cek HANYA jenis tugas yang sedang diklik ini
             const iniBelumDikumpul = /belum dikumpul/i.test(String(jenis || ""));
-        
             document.getElementById("fotoJudul").textContent = "Foto Tugas " + noTugas;
             document.getElementById("fotoKeterangan").textContent = jenis ? ("Jenis: " + jenis) : "";
             const img = document.getElementById("fotoTugasImg");
             const kosong = document.getElementById("fotoKosong");
             const btnUnduh = document.getElementById("btnUnduhFoto");
-        
             if (fotoURL) {
                 img.style.display = "block";
                 kosong.style.display = "none";
@@ -431,18 +427,14 @@
                 kosong.textContent = iniBelumDikumpul ? "Tugas belum dikumpul" : "Foto tugas belum tersedia";
                 urlFotoSaatIni = "";
             }
-        
-            // Tombol download: AKTIF jika tugas ini "belum dikumpul", selain itu disembunyikan
             if (iniBelumDikumpul) {
                 btnUnduh.classList.add("show");
             } else {
                 btnUnduh.classList.remove("show");
             }
-        
             document.getElementById("modalFoto").style.display = "flex";
         }
 
-        // === POPUP FOTO ULANGAN ===
         function bukaFotoUlangan(idx, noUlangan, nisn, mapel) {
             const r = dataRincian.filter(x =>
                 String(x.nisn).trim() === String(nisn).trim() &&
@@ -467,13 +459,10 @@
                 kosong.textContent = "Foto ulangan belum tersedia";
                 urlFotoSaatIni = "";
             }
-            // Tombol download SELALU disembunyikan untuk foto ulangan
             btnUnduh.classList.remove("show");
-        
             document.getElementById("modalFoto").style.display = "flex";
         }
-        
-        // === DOWNLOAD FOTO TUGAS (via blob agar pasti terunduh) ===
+
         async function unduhFotoTugas() {
             if (!urlFotoSaatIni) return;
             const btn = document.getElementById("btnUnduhFoto");
@@ -512,7 +501,7 @@
             st.textContent = ket.toUpperCase();
             st.className = "status-text " + (/tidak wajib ikut semester/i.test(ket) ? "hijau" : "merah");
             document.getElementById("modalNilai").textContent =
-                `Raport: ${tampil(siswa.raport)} | Tugas: ${tampil(siswa.tugas)} | Ulangan: ${tampil(siswa.ulangan)} | Semester: ${tampil(siswa.semester)}`;
+                `Raport: ${tampil(siswa.raport)} | Tugas: ${tampil(siswa.tugas)} | Ulangan: ${tampil(siswa.ulangan)} | Praktik: ${tampil(siswa.praktik)} | Semester: ${tampil(siswa.semester)}`;
             document.getElementById("btnUnduhSuratModal").classList.toggle("show", munculTombol);
             document.getElementById("modalStatus").style.display = "flex";
         }
