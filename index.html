@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cek Nilai Hasil Pembelajaran</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         @page { size: A4; margin: 0; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Times New Roman', serif; }
@@ -111,6 +113,10 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* SweetAlert Custom */
+        .swal2-popup { font-family: 'Segoe UI', Tahoma, sans-serif !important; }
+        .swal2-html-container { overflow-y: auto; max-height: 60vh; }
     </style>
 </head>
 <body>
@@ -275,6 +281,137 @@
             if (siswa.foto && String(siswa.foto).trim() !== '') return siswa.foto;
             return BASE_FOTO + String(siswa.nisn).trim() + EKSTENSI_FOTO;
         }
+
+        // === FUNGSI KKM BERDASARKAN KELAS ===
+        function getKKM(kelas) {
+            const k = String(kelas || '').toUpperCase().replace(/\s/g, '');
+            if (k.startsWith('XII')) return 75;
+            if (k.startsWith('XI')) return 75;
+            if (k.startsWith('X')) return 70;
+            return 70;
+        }
+
+        // === STATUS TUGAS ===
+        function statusTugas(nilai, kkm) {
+            if (nilai === "" || nilai === "-" || nilai === null || nilai === undefined) {
+                return '<span style="color:#dc3545;font-weight:bold;">Tugas Belum Dikumpul</span>';
+            }
+            const n = Number(nilai);
+            if (isNaN(n) || n === 0) {
+                return '<span style="color:#dc3545;font-weight:bold;">Tugas Belum Dikumpul</span>';
+            }
+            if (n < kkm) {
+                return '<span style="color:#f5a623;font-weight:bold;">Perbaiki Tugasnya</span>';
+            }
+            return '<span style="color:#198754;font-weight:bold;">Tuntas</span>';
+        }
+
+        // === STATUS ULANGAN ===
+        function statusUlangan(nilai, kkm) {
+            if (nilai === "" || nilai === "-" || nilai === null || nilai === undefined) {
+                return '<span style="color:#dc3545;font-weight:bold;">Belum Ulangan</span>';
+            }
+            const n = Number(nilai);
+            if (isNaN(n)) {
+                return '<span style="color:#dc3545;font-weight:bold;">Belum Ulangan</span>';
+            }
+            if (n < kkm) {
+                return '<span style="color:#f5a623;font-weight:bold;">REMEDIAL</span>';
+            }
+            return '<span style="color:#198754;font-weight:bold;">Tuntas</span>';
+        }
+
+        // === TAMPILKAN SWEETALERT INFO NILAI ===
+        function tampilkanAlertNilai(hasil) {
+            const siswa = hasil[0];
+            const nisn = siswa.nisn;
+            const nama = siswa.nama;
+            const kelas = siswa.kelas;
+            const kkm = getKKM(kelas);
+
+            // Filter rincian untuk NISN ini (bisa multiple baris = multiple mapel)
+            const rincianSiswa = dataRincian.filter(r => String(r.nisn).trim() === String(nisn).trim());
+
+            let html = `
+                <div style="text-align:left; font-family: Arial, sans-serif;">
+                    <div style="background:#eef2f7; padding:12px; border-radius:8px; margin-bottom:15px; border-left:4px solid #2a5298;">
+                        <p style="margin:3px 0; font-size:13px;"><strong>NISN:</strong> ${nisn}</p>
+                        <p style="margin:3px 0; font-size:13px;"><strong>Nama:</strong> ${nama}</p>
+                        <p style="margin:3px 0; font-size:13px;"><strong>Kelas:</strong> ${kelas}</p>
+                        <p style="margin:3px 0; font-size:12px; color:#666;"><em>KKM Kelas: ${kkm}</em></p>
+                    </div>
+            `;
+
+            if (rincianSiswa.length === 0) {
+                html += `<p style="text-align:center;color:#666;padding:1rem;">Data rincian nilai belum tersedia.</p>`;
+            } else {
+                rincianSiswa.forEach(r => {
+                    html += `
+                        <div style="margin-bottom:18px;">
+                            <p style="margin:5px 0 8px; color:#1e3c72; font-weight:bold; font-size:14px;">📚 ${r.mapel || '-'}</p>
+
+                            <p style="margin:8px 0 5px; font-weight:bold; font-size:12px; color:#f5a623;">INFO NILAI TUGAS</p>
+                            <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                                <thead>
+                                    <tr style="background:#2a5298; color:white;">
+                                        <th style="padding:5px; border:1px solid #ddd; text-align:left;">Tugas</th>
+                                        <th style="padding:5px; border:1px solid #ddd; text-align:center;">Nilai</th>
+                                        <th style="padding:5px; border:1px solid #ddd; text-align:left;">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    for (let i = 1; i <= 5; i++) {
+                        const nilai = r['tugas' + i];
+                        html += `
+                            <tr>
+                                <td style="padding:5px; border:1px solid #ddd;">Tugas ${i}</td>
+                                <td style="padding:5px; border:1px solid #ddd; text-align:center; font-weight:bold;">${tampil(nilai)}</td>
+                                <td style="padding:5px; border:1px solid #ddd;">${statusTugas(nilai, kkm)}</td>
+                            </tr>
+                        `;
+                    }
+                    html += `</tbody></table>
+
+                        <p style="margin:12px 0 5px; font-weight:bold; font-size:12px; color:#f5a623;">INFO NILAI ULANGAN</p>
+                        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                            <thead>
+                                <tr style="background:#2a5298; color:white;">
+                                    <th style="padding:5px; border:1px solid #ddd; text-align:left;">Ulangan</th>
+                                    <th style="padding:5px; border:1px solid #ddd; text-align:center;">Nilai</th>
+                                    <th style="padding:5px; border:1px solid #ddd; text-align:left;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    for (let i = 1; i <= 5; i++) {
+                        const nilai = r['ulangan' + i];
+                        html += `
+                            <tr>
+                                <td style="padding:5px; border:1px solid #ddd;">Ulangan ${i}</td>
+                                <td style="padding:5px; border:1px solid #ddd; text-align:center; font-weight:bold;">${tampil(nilai)}</td>
+                                <td style="padding:5px; border:1px solid #ddd;">${statusUlangan(nilai, kkm)}</td>
+                            </tr>
+                        `;
+                    }
+                    html += `</tbody></table></div>`;
+                });
+            }
+
+            html += `</div>`;
+
+            Swal.fire({
+                title: '📋 Info Nilai Siswa',
+                html: html,
+                width: '680px',
+                showCloseButton: true,
+                confirmButtonText: 'Tutup',
+                confirmButtonColor: '#2a5298',
+                allowOutsideClick: false
+            });
+        }
+
+        // === VARIABEL GLOBAL ===
         let dataUtama = [], dataRincian = [], dataSekolah = {}, nisnSaatIni = "", dataMapelSaatIni = null;
         let urlFotoSaatIni = "";
 
@@ -300,8 +437,13 @@
                 nisnSaatIni = nisn;
                 const hasil = dataUtama.filter(s => String(s.nisn).trim() === nisn);
                 document.getElementById("loading").style.display = "none";
-                if (hasil.length > 0) tampilkanHasil(hasil);
-                else document.getElementById("errorMsg").style.display = "block";
+                if (hasil.length > 0) {
+                    tampilkanHasil(hasil);
+                    // 🔔 Munculkan SweetAlert setelah data ditampilkan
+                    setTimeout(() => tampilkanAlertNilai(hasil), 300);
+                } else {
+                    document.getElementById("errorMsg").style.display = "block";
+                }
             } catch (err) {
                 document.getElementById("loading").style.display = "none";
                 alert("Error: " + err.message);
