@@ -220,7 +220,7 @@
         </div>
     </div>
 
-    <!-- Modal Status -->
+    <!-- Modal Status (Cadangan, tidak dipakai lagi karena pakai SweetAlert) -->
     <div class="modal-overlay" id="modalStatus">
         <div class="modal">
             <h3>Status Kelulusan</h3>
@@ -270,6 +270,14 @@
         const BASE_FOTO = "https://raw.githubusercontent.com/hidayatrasyidsyafira/fotosiswaSMAN9/main/";
         const EKSTENSI_FOTO = ".JPG";
 
+        // === NORMALISASI & ESCAPE (WAJIB ADA) ===
+        function normalize(str) {
+            return String(str || '').trim().toUpperCase().replace(/\s+/g, ' ');
+        }
+        function escapeStr(str) {
+            return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        }
+
         const tampil = x => {
             if (x === "" || x === undefined || x === null) return "-";
             const n = Number(x);
@@ -282,7 +290,7 @@
             return BASE_FOTO + String(siswa.nisn).trim() + EKSTENSI_FOTO;
         }
 
-        // === FUNGSI KKM BERDASARKAN KELAS ===
+        // === KKM BERDASARKAN KELAS ===
         function getKKM(kelas) {
             const k = String(kelas || '').toUpperCase().replace(/\s/g, '');
             if (k.startsWith('XII')) return 75;
@@ -293,60 +301,54 @@
 
         // === STATUS TUGAS ===
         function statusTugas(nilai, kkm) {
-            // Kosong / "-" / null / undefined → Belum Dirilis
             if (nilai === "" || nilai === "-" || nilai === null || nilai === undefined) {
                 return '<span style="color:#6c757d;font-weight:bold;">Tugas Belum Dirilis</span>';
             }
             const n = Number(nilai);
-            // Jika bukan angka → Belum Dirilis
             if (isNaN(n)) {
                 return '<span style="color:#6c757d;font-weight:bold;">Tugas Belum Dirilis</span>';
             }
-            // Nilai 0 → Belum Dikumpul
             if (n === 0) {
                 return '<span style="color:#dc3545;font-weight:bold;">Tugas Belum Dikumpul</span>';
             }
-            // Di bawah KKM → Perbaiki
             if (n < kkm) {
                 return '<span style="color:#f5a623;font-weight:bold;">Perbaiki Tugasnya</span>';
             }
-            // Tuntas
             return '<span style="color:#198754;font-weight:bold;">Tuntas</span>';
         }
 
         // === STATUS ULANGAN ===
         function statusUlangan(nilai, kkm) {
-            // Kosong / "-" / null / undefined → Belum Dirilis
             if (nilai === "" || nilai === "-" || nilai === null || nilai === undefined) {
                 return '<span style="color:#6c757d;font-weight:bold;">Ulangan Belum Dirilis</span>';
             }
             const n = Number(nilai);
-            // Jika bukan angka → Belum Dirilis
             if (isNaN(n)) {
                 return '<span style="color:#6c757d;font-weight:bold;">Ulangan Belum Dirilis</span>';
             }
-            // Nilai 0 → Belum Ulangan
             if (n === 0) {
                 return '<span style="color:#dc3545;font-weight:bold;">Belum Ulangan</span>';
             }
-            // Di bawah KKM → REMEDIAL
             if (n < kkm) {
                 return '<span style="color:#f5a623;font-weight:bold;">REMEDIAL</span>';
             }
-            // Tuntas
             return '<span style="color:#198754;font-weight:bold;">Tuntas</span>';
         }
 
-        // === TAMPILKAN SWEETALERT INFO NILAI ===
+        // === VARIABEL GLOBAL ===
+        let dataUtama = [], dataRincian = [], dataSekolah = {}, nisnSaatIni = "", dataMapelSaatIni = null;
+        let urlFotoSaatIni = "";
+
+        // === SWEETALERT INFO NILAI ===
         function tampilkanAlertNilai(hasil) {
             const siswa = hasil[0];
             const nisn = siswa.nisn;
             const nama = siswa.nama;
             const kelas = siswa.kelas;
             const kkm = getKKM(kelas);
-        
+
             const rincianSiswa = dataRincian.filter(r => normalize(r.nisn) === normalize(nisn));
-        
+
             let html = `
                 <div style="text-align:left; font-family: Arial, sans-serif;">
                     <div style="background:#eef2f7; padding:12px; border-radius:8px; margin-bottom:15px; border-left:4px solid #2a5298;">
@@ -356,16 +358,15 @@
                         <p style="margin:3px 0; font-size:12px; color:#666;"><em>KKM Kelas: ${kkm}</em></p>
                     </div>
             `;
-        
+
             if (rincianSiswa.length === 0) {
                 html += `<p style="text-align:center;color:#666;padding:1rem;">Data rincian nilai belum tersedia.</p>`;
             } else {
-                rincianSiswa.forEach((r, idx) => {
-                    // Cari data utama yang sesuai untuk mapel ini (untuk tombol Cek Status)
+                rincianSiswa.forEach((r) => {
                     const mapelNorm = normalize(r.mapel);
                     const siswaMapel = hasil.find(s => normalize(s.mapel) === mapelNorm);
                     const indexDiHasil = siswaMapel ? hasil.indexOf(siswaMapel) : -1;
-        
+
                     html += `
                         <div style="margin-bottom:18px;">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -377,7 +378,7 @@
                                     </button>
                                 ` : ''}
                             </div>
-        
+
                             <p style="margin:8px 0 5px; font-weight:bold; font-size:12px; color:#f5a623;">INFO NILAI TUGAS</p>
                             <table style="width:100%; border-collapse:collapse; font-size:12px;">
                                 <thead>
@@ -400,7 +401,7 @@
                         `;
                     }
                     html += `</tbody></table>
-        
+
                             <p style="margin:12px 0 5px; font-weight:bold; font-size:12px; color:#f5a623;">INFO NILAI ULANGAN</p>
                             <table style="width:100%; border-collapse:collapse; font-size:12px;">
                                 <thead>
@@ -425,9 +426,9 @@
                     html += `</tbody></table></div>`;
                 });
             }
-        
+
             html += `</div>`;
-        
+
             Swal.fire({
                 title: '📋 Info Nilai Siswa',
                 html: html,
@@ -439,28 +440,26 @@
             });
         }
 
-        // Cek status dari dalam SweetAlert
+        // === CEK STATUS DARI ALERT ===
         function cekStatusDariAlert(index) {
             const hasilSiswa = dataUtama.filter(s => normalize(s.nisn) === normalize(nisnSaatIni));
             const siswa = hasilSiswa[index];
             if (!siswa) return;
-        
+
             dataMapelSaatIni = siswa;
             const ket = (siswa.keterangan || "").toString();
             const munculTombol = /tidak wajib ikut semester/i.test(ket);
             const kkm = getKKM(siswa.kelas);
-        
-            // Tutup alert info nilai dulu
+
             Swal.close();
-        
-            // Munculkan popup status
+
             Swal.fire({
                 title: 'Status Kelulusan',
                 html: `
                     <p style="color:#666; margin-bottom:10px;">Mata Pelajaran: <strong>${siswa.mapel || '-'}</strong></p>
                     <div style="padding:15px; border-radius:8px; font-weight:bold; text-transform:uppercase; 
-                         background:${/tidak wajib ikut semester/i.test(ket) ? '#e8f5ee' : '#fdecea'}; 
-                         color:${/tidak wajib ikut semester/i.test(ket) ? '#198754' : '#dc3545'}; margin-bottom:12px;">
+                         background:${munculTombol ? '#e8f5ee' : '#fdecea'}; 
+                         color:${munculTombol ? '#198754' : '#dc3545'}; margin-bottom:12px;">
                         ${ket.toUpperCase() || '-'}
                     </div>
                     <p style="color:#555; font-size:0.9rem;">
@@ -484,10 +483,7 @@
             });
         }
 
-        // === VARIABEL GLOBAL ===
-        let dataUtama = [], dataRincian = [], dataSekolah = {}, nisnSaatIni = "", dataMapelSaatIni = null;
-        let urlFotoSaatIni = "";
-
+        // === CEK NILAI UTAMA ===
         async function cekNilai() {
             const nisn = document.getElementById("nisn").value.trim();
             if (!nisn) return alert("Masukkan NISN terlebih dahulu!");
@@ -508,11 +504,10 @@
                 dataRincian = json.rincian || [];
                 dataSekolah = json.sekolah || {};
                 nisnSaatIni = nisn;
-                const hasil = dataUtama.filter(s => String(s.nisn).trim() === nisn);
+                const hasil = dataUtama.filter(s => normalize(s.nisn) === normalize(nisn));
                 document.getElementById("loading").style.display = "none";
                 if (hasil.length > 0) {
                     tampilkanHasil(hasil);
-                    // 🔔 Munculkan SweetAlert setelah data ditampilkan
                     setTimeout(() => tampilkanAlertNilai(hasil), 300);
                 } else {
                     document.getElementById("errorMsg").style.display = "block";
@@ -523,6 +518,7 @@
             }
         }
 
+        // === TAMPILKAN HASIL DI HALAMAN ===
         function tampilkanHasil(hasil) {
             const d = hasil[0];
             const fotoEl = document.getElementById("foto");
@@ -537,11 +533,13 @@
             tbody.innerHTML = "";
             hasil.forEach((s, i) => {
                 const bintang = (s.bintang !== "" && s.bintang !== undefined && s.bintang !== null) ? "★ " + s.bintang : "-";
+                const nisnEsc = escapeStr(s.nisn);
+                const mapelEsc = escapeStr(s.mapel);
                 tbody.innerHTML += `
                     <tr>
                         <td>${s.nama}</td><td>${s.kelas}</td><td>${s.mapel}</td>
-                        <td><span class="nilai-link" onclick="bukaTugas('${s.nisn}','${s.mapel}')">${tampil(s.tugas)}</span></td>
-                        <td><span class="nilai-link" onclick="bukaUlangan('${s.nisn}','${s.mapel}')">${tampil(s.ulangan)}</span></td>
+                        <td><span class="nilai-link" onclick="bukaTugas('${nisnEsc}','${mapelEsc}')">${tampil(s.tugas)}</span></td>
+                        <td><span class="nilai-link" onclick="bukaUlangan('${nisnEsc}','${mapelEsc}')">${tampil(s.ulangan)}</span></td>
                         <td class="praktik-col">${tampil(s.praktik)}</td>
                         <td>${tampil(s.semester)}</td>
                         <td>${tampil(s.raport)}</td>
@@ -557,17 +555,27 @@
             sec.style.display = sec.style.display === "block" ? "none" : "block";
         }
 
+        // === RINCIAN TUGAS (DIPERBAIKI - NORMALISASI) ===
         function bukaTugas(nisn, mapel) {
+            const nisnNorm = normalize(nisn);
+            const mapelNorm = normalize(mapel);
             const filter = dataRincian.filter(r =>
-                String(r.nisn).trim() === String(nisn).trim() &&
-                String(r.mapel).trim() === String(mapel).trim()
+                normalize(r.nisn) === nisnNorm && normalize(r.mapel) === mapelNorm
             );
             const tbody = document.getElementById("isiTugas");
             tbody.innerHTML = "";
             if (filter.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" style="padding:1rem;color:#666;">Data rincian tugas tidak ditemukan</td></tr>';
+                const mapelSiswa = dataRincian.filter(r => normalize(r.nisn) === nisnNorm).map(r => r.mapel);
+                const listMapel = mapelSiswa.length > 0 
+                    ? `<br><small style="color:#888;">Mapel di Sheet2: ${mapelSiswa.join(', ')}</small>` 
+                    : '<br><small style="color:#888;">Tidak ada data untuk NISN ini di Sheet2</small>';
+                tbody.innerHTML = `<tr><td colspan="11" style="padding:1rem;color:#666;">
+                    Data rincian tugas tidak ditemukan untuk Mapel "${mapel}".${listMapel}
+                </td></tr>`;
             } else {
                 filter.forEach((r, idx) => {
+                    const nisnEsc = escapeStr(r.nisn);
+                    const mapelEsc = escapeStr(r.mapel);
                     tbody.innerHTML += `
                         <tr>
                             <td>${tampil(r.no)}</td>
@@ -575,11 +583,11 @@
                             <td>${r.nama}</td>
                             <td>${r.kelas}</td>
                             <td>${r.mapel}</td>
-                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},1,'${r.nisn}','${r.mapel}')">${tampil(r.tugas1)}<span class="tooltip-text">${r.jenis1 || 'Jenis Tugas 1'}</span></td>
-                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},2,'${r.nisn}','${r.mapel}')">${tampil(r.tugas2)}<span class="tooltip-text">${r.jenis2 || 'Jenis Tugas 2'}</span></td>
-                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},3,'${r.nisn}','${r.mapel}')">${tampil(r.tugas3)}<span class="tooltip-text">${r.jenis3 || 'Jenis Tugas 3'}</span></td>
-                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},4,'${r.nisn}','${r.mapel}')">${tampil(r.tugas4)}<span class="tooltip-text">${r.jenis4 || 'Jenis Tugas 4'}</span></td>
-                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},5,'${r.nisn}','${r.mapel}')">${tampil(r.tugas5)}<span class="tooltip-text">${r.jenis5 || 'Jenis Tugas 5'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},1,'${nisnEsc}','${mapelEsc}')">${tampil(r.tugas1)}<span class="tooltip-text">${r.jenis1 || 'Jenis Tugas 1'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},2,'${nisnEsc}','${mapelEsc}')">${tampil(r.tugas2)}<span class="tooltip-text">${r.jenis2 || 'Jenis Tugas 2'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},3,'${nisnEsc}','${mapelEsc}')">${tampil(r.tugas3)}<span class="tooltip-text">${r.jenis3 || 'Jenis Tugas 3'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},4,'${nisnEsc}','${mapelEsc}')">${tampil(r.tugas4)}<span class="tooltip-text">${r.jenis4 || 'Jenis Tugas 4'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoTugas(${idx},5,'${nisnEsc}','${mapelEsc}')">${tampil(r.tugas5)}<span class="tooltip-text">${r.jenis5 || 'Jenis Tugas 5'}</span></td>
                             <td class="rata-highlight">${tampil(r.rataTugas)}</td>
                         </tr>`;
                 });
@@ -587,17 +595,27 @@
             document.getElementById("modalTugas").style.display = "flex";
         }
 
+        // === RINCIAN ULANGAN (DIPERBAIKI - NORMALISASI) ===
         function bukaUlangan(nisn, mapel) {
+            const nisnNorm = normalize(nisn);
+            const mapelNorm = normalize(mapel);
             const filter = dataRincian.filter(r =>
-                String(r.nisn).trim() === String(nisn).trim() &&
-                String(r.mapel).trim() === String(mapel).trim()
+                normalize(r.nisn) === nisnNorm && normalize(r.mapel) === mapelNorm
             );
             const tbody = document.getElementById("isiUlangan");
             tbody.innerHTML = "";
             if (filter.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" style="padding:1rem;color:#666;">Data rincian ulangan tidak ditemukan</td></tr>';
+                const mapelSiswa = dataRincian.filter(r => normalize(r.nisn) === nisnNorm).map(r => r.mapel);
+                const listMapel = mapelSiswa.length > 0 
+                    ? `<br><small style="color:#888;">Mapel di Sheet2: ${mapelSiswa.join(', ')}</small>` 
+                    : '<br><small style="color:#888;">Tidak ada data untuk NISN ini di Sheet2</small>';
+                tbody.innerHTML = `<tr><td colspan="11" style="padding:1rem;color:#666;">
+                    Data rincian ulangan tidak ditemukan untuk Mapel "${mapel}".${listMapel}
+                </td></tr>`;
             } else {
                 filter.forEach((r, idx) => {
+                    const nisnEsc = escapeStr(r.nisn);
+                    const mapelEsc = escapeStr(r.mapel);
                     tbody.innerHTML += `
                         <tr>
                             <td>${tampil(r.no)}</td>
@@ -605,11 +623,11 @@
                             <td>${r.nama}</td>
                             <td>${r.kelas}</td>
                             <td>${r.mapel}</td>
-                            <td class="tooltip-cell" onclick="bukaFotoUlangan(${idx},1,'${r.nisn}','${r.mapel}')">${tampil(r.ulangan1)}<span class="tooltip-text">${r.ketUlangan1 || 'Keterangan Ulangan 1'}</span></td>
-                            <td class="tooltip-cell" onclick="bukaFotoUlangan(${idx},2,'${r.nisn}','${r.mapel}')">${tampil(r.ulangan2)}<span class="tooltip-text">${r.ketUlangan2 || 'Keterangan Ulangan 2'}</span></td>
-                            <td class="tooltip-cell" onclick="bukaFotoUlangan(${idx},3,'${r.nisn}','${r.mapel}')">${tampil(r.ulangan3)}<span class="tooltip-text">${r.ketUlangan3 || 'Keterangan Ulangan 3'}</span></td>
-                            <td class="tooltip-cell" onclick="bukaFotoUlangan(${idx},4,'${r.nisn}','${r.mapel}')">${tampil(r.ulangan4)}<span class="tooltip-text">${r.ketUlangan4 || 'Keterangan Ulangan 4'}</span></td>
-                            <td class="tooltip-cell" onclick="bukaFotoUlangan(${idx},5,'${r.nisn}','${r.mapel}')">${tampil(r.ulangan5)}<span class="tooltip-text">${r.ketUlangan5 || 'Keterangan Ulangan 5'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoUlangan(${idx},1,'${nisnEsc}','${mapelEsc}')">${tampil(r.ulangan1)}<span class="tooltip-text">${r.ketUlangan1 || 'Keterangan Ulangan 1'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoUlangan(${idx},2,'${nisnEsc}','${mapelEsc}')">${tampil(r.ulangan2)}<span class="tooltip-text">${r.ketUlangan2 || 'Keterangan Ulangan 2'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoUlangan(${idx},3,'${nisnEsc}','${mapelEsc}')">${tampil(r.ulangan3)}<span class="tooltip-text">${r.ketUlangan3 || 'Keterangan Ulangan 3'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoUlangan(${idx},4,'${nisnEsc}','${mapelEsc}')">${tampil(r.ulangan4)}<span class="tooltip-text">${r.ketUlangan4 || 'Keterangan Ulangan 4'}</span></td>
+                            <td class="tooltip-cell" onclick="bukaFotoUlangan(${idx},5,'${nisnEsc}','${mapelEsc}')">${tampil(r.ulangan5)}<span class="tooltip-text">${r.ketUlangan5 || 'Keterangan Ulangan 5'}</span></td>
                             <td class="rata-highlight">${tampil(r.rataUlangan)}</td>
                         </tr>`;
                 });
@@ -617,10 +635,12 @@
             document.getElementById("modalUlangan").style.display = "flex";
         }
 
+        // === FOTO TUGAS ===
         function bukaFotoTugas(idx, noTugas, nisn, mapel) {
+            const nisnNorm = normalize(nisn);
+            const mapelNorm = normalize(mapel);
             const r = dataRincian.filter(x =>
-                String(x.nisn).trim() === String(nisn).trim() &&
-                String(x.mapel).trim() === String(mapel).trim()
+                normalize(x.nisn) === nisnNorm && normalize(x.mapel) === mapelNorm
             )[idx];
             if (!r) return;
             const fotoURL = r['foto' + noTugas] || "";
@@ -650,10 +670,12 @@
             document.getElementById("modalFoto").style.display = "flex";
         }
 
+        // === FOTO ULANGAN ===
         function bukaFotoUlangan(idx, noUlangan, nisn, mapel) {
+            const nisnNorm = normalize(nisn);
+            const mapelNorm = normalize(mapel);
             const r = dataRincian.filter(x =>
-                String(x.nisn).trim() === String(nisn).trim() &&
-                String(x.mapel).trim() === String(mapel).trim()
+                normalize(x.nisn) === nisnNorm && normalize(x.mapel) === mapelNorm
             )[idx];
             if (!r) return;
             const fotoURL = r['fotoUlangan' + noUlangan] || "";
@@ -678,6 +700,7 @@
             document.getElementById("modalFoto").style.display = "flex";
         }
 
+        // === DOWNLOAD FOTO ===
         async function unduhFotoTugas() {
             if (!urlFotoSaatIni) return;
             const btn = document.getElementById("btnUnduhFoto");
@@ -704,28 +727,14 @@
             }
         }
 
-        // function cekStatus(index) {
-        //     const hasilSiswa = dataUtama.filter(s => String(s.nisn).trim() === nisnSaatIni);
-        //     const siswa = hasilSiswa[index];
-        //     if (!siswa) return;
-        //     dataMapelSaatIni = siswa;
-        //     const ket = (siswa.keterangan || "").toString();
-        //     const munculTombol = /tidak wajib ikut semester/i.test(ket);
-        //     document.getElementById("modalMapel").textContent = siswa.mapel || "-";
-        //     const st = document.getElementById("modalStatusText");
-        //     st.textContent = ket.toUpperCase();
-        //     st.className = "status-text " + (/tidak wajib ikut semester/i.test(ket) ? "hijau" : "merah");
-        //     document.getElementById("modalNilai").textContent =
-        //         `Raport: ${tampil(siswa.raport)} | Tugas: ${tampil(siswa.tugas)} | Ulangan: ${tampil(siswa.ulangan)} | Praktik: ${tampil(siswa.praktik)} | Semester: ${tampil(siswa.semester)}`;
-        //     document.getElementById("btnUnduhSuratModal").classList.toggle("show", munculTombol);
-        //     document.getElementById("modalStatus").style.display = "flex";
-        // }
-
+        // === CEK STATUS (dari tabel detail) ===
         function cekStatus(index) {
             cekStatusDariAlert(index);
         }
+
         function tutupModal(id) { document.getElementById(id).style.display = "none"; }
 
+        // === DOWNLOAD SURAT ===
         function unduhSurat() {
             if (!dataMapelSaatIni) return;
             const s = dataMapelSaatIni;
@@ -746,6 +755,7 @@
             document.getElementById("sNisn").textContent = s.nisn || "-";
             document.getElementById("sKelas").textContent = s.kelas || "-";
             document.getElementById("sMapel").textContent = s.mapel || "-";
+            Swal.close();
             tutupModal("modalStatus");
             document.getElementById("suratKet").style.display = "block";
             window.print();
