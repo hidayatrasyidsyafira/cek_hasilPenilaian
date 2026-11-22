@@ -344,10 +344,9 @@
             const nama = siswa.nama;
             const kelas = siswa.kelas;
             const kkm = getKKM(kelas);
-
-            // Filter rincian untuk NISN ini (bisa multiple baris = multiple mapel)
-            const rincianSiswa = dataRincian.filter(r => String(r.nisn).trim() === String(nisn).trim());
-
+        
+            const rincianSiswa = dataRincian.filter(r => normalize(r.nisn) === normalize(nisn));
+        
             let html = `
                 <div style="text-align:left; font-family: Arial, sans-serif;">
                     <div style="background:#eef2f7; padding:12px; border-radius:8px; margin-bottom:15px; border-left:4px solid #2a5298;">
@@ -357,15 +356,28 @@
                         <p style="margin:3px 0; font-size:12px; color:#666;"><em>KKM Kelas: ${kkm}</em></p>
                     </div>
             `;
-
+        
             if (rincianSiswa.length === 0) {
                 html += `<p style="text-align:center;color:#666;padding:1rem;">Data rincian nilai belum tersedia.</p>`;
             } else {
-                rincianSiswa.forEach(r => {
+                rincianSiswa.forEach((r, idx) => {
+                    // Cari data utama yang sesuai untuk mapel ini (untuk tombol Cek Status)
+                    const mapelNorm = normalize(r.mapel);
+                    const siswaMapel = hasil.find(s => normalize(s.mapel) === mapelNorm);
+                    const indexDiHasil = siswaMapel ? hasil.indexOf(siswaMapel) : -1;
+        
                     html += `
                         <div style="margin-bottom:18px;">
-                            <p style="margin:5px 0 8px; color:#1e3c72; font-weight:bold; font-size:14px;">📚 ${r.mapel || '-'}</p>
-
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <p style="margin:0; color:#1e3c72; font-weight:bold; font-size:14px;">📚 ${r.mapel || '-'}</p>
+                                ${indexDiHasil >= 0 ? `
+                                    <button onclick="cekStatusDariAlert(${indexDiHasil})"
+                                        style="background:#198754; color:white; border:none; padding:5px 12px; border-radius:6px; font-size:11px; cursor:pointer; font-weight:bold;">
+                                        🔍 Cek Status
+                                    </button>
+                                ` : ''}
+                            </div>
+        
                             <p style="margin:8px 0 5px; font-weight:bold; font-size:12px; color:#f5a623;">INFO NILAI TUGAS</p>
                             <table style="width:100%; border-collapse:collapse; font-size:12px;">
                                 <thead>
@@ -388,17 +400,17 @@
                         `;
                     }
                     html += `</tbody></table>
-
-                        <p style="margin:12px 0 5px; font-weight:bold; font-size:12px; color:#f5a623;">INFO NILAI ULANGAN</p>
-                        <table style="width:100%; border-collapse:collapse; font-size:12px;">
-                            <thead>
-                                <tr style="background:#2a5298; color:white;">
-                                    <th style="padding:5px; border:1px solid #ddd; text-align:left;">Ulangan</th>
-                                    <th style="padding:5px; border:1px solid #ddd; text-align:center;">Nilai</th>
-                                    <th style="padding:5px; border:1px solid #ddd; text-align:left;">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+        
+                            <p style="margin:12px 0 5px; font-weight:bold; font-size:12px; color:#f5a623;">INFO NILAI ULANGAN</p>
+                            <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                                <thead>
+                                    <tr style="background:#2a5298; color:white;">
+                                        <th style="padding:5px; border:1px solid #ddd; text-align:left;">Ulangan</th>
+                                        <th style="padding:5px; border:1px solid #ddd; text-align:center;">Nilai</th>
+                                        <th style="padding:5px; border:1px solid #ddd; text-align:left;">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
                     `;
                     for (let i = 1; i <= 5; i++) {
                         const nilai = r['ulangan' + i];
@@ -413,13 +425,58 @@
                     html += `</tbody></table></div>`;
                 });
             }
-
+        
             html += `</div>`;
-
+        
             Swal.fire({
                 title: '📋 Info Nilai Siswa',
                 html: html,
-                width: '680px',
+                width: '700px',
+                showCloseButton: true,
+                confirmButtonText: 'Tutup',
+                confirmButtonColor: '#2a5298',
+                allowOutsideClick: false
+            });
+        }
+
+        // Cek status dari dalam SweetAlert
+        function cekStatusDariAlert(index) {
+            const hasilSiswa = dataUtama.filter(s => normalize(s.nisn) === normalize(nisnSaatIni));
+            const siswa = hasilSiswa[index];
+            if (!siswa) return;
+        
+            dataMapelSaatIni = siswa;
+            const ket = (siswa.keterangan || "").toString();
+            const munculTombol = /tidak wajib ikut semester/i.test(ket);
+            const kkm = getKKM(siswa.kelas);
+        
+            // Tutup alert info nilai dulu
+            Swal.close();
+        
+            // Munculkan popup status
+            Swal.fire({
+                title: 'Status Kelulusan',
+                html: `
+                    <p style="color:#666; margin-bottom:10px;">Mata Pelajaran: <strong>${siswa.mapel || '-'}</strong></p>
+                    <div style="padding:15px; border-radius:8px; font-weight:bold; text-transform:uppercase; 
+                         background:${/tidak wajib ikut semester/i.test(ket) ? '#e8f5ee' : '#fdecea'}; 
+                         color:${/tidak wajib ikut semester/i.test(ket) ? '#198754' : '#dc3545'}; margin-bottom:12px;">
+                        ${ket.toUpperCase() || '-'}
+                    </div>
+                    <p style="color:#555; font-size:0.9rem;">
+                        KKM: <b>${kkm}</b> | Raport: <b>${tampil(siswa.raport)}</b> | 
+                        Tugas: <b>${tampil(siswa.tugas)}</b> | Ulangan: <b>${tampil(siswa.ulangan)}</b> | 
+                        Praktik: <b>${tampil(siswa.praktik)}</b> | Semester: <b>${tampil(siswa.semester)}</b>
+                    </p>
+                    ${munculTombol ? `
+                        <button onclick="unduhSurat()" 
+                            style="width:100%; padding:10px; background:#198754; color:white; border:none; 
+                                   border-radius:8px; font-weight:600; cursor:pointer; margin-bottom:8px;">
+                            📄 Download Surat Keterangan
+                        </button>
+                    ` : ''}
+                `,
+                width: '500px',
                 showCloseButton: true,
                 confirmButtonText: 'Tutup',
                 confirmButtonColor: '#2a5298',
@@ -647,23 +704,26 @@
             }
         }
 
-        function cekStatus(index) {
-            const hasilSiswa = dataUtama.filter(s => String(s.nisn).trim() === nisnSaatIni);
-            const siswa = hasilSiswa[index];
-            if (!siswa) return;
-            dataMapelSaatIni = siswa;
-            const ket = (siswa.keterangan || "").toString();
-            const munculTombol = /tidak wajib ikut semester/i.test(ket);
-            document.getElementById("modalMapel").textContent = siswa.mapel || "-";
-            const st = document.getElementById("modalStatusText");
-            st.textContent = ket.toUpperCase();
-            st.className = "status-text " + (/tidak wajib ikut semester/i.test(ket) ? "hijau" : "merah");
-            document.getElementById("modalNilai").textContent =
-                `Raport: ${tampil(siswa.raport)} | Tugas: ${tampil(siswa.tugas)} | Ulangan: ${tampil(siswa.ulangan)} | Praktik: ${tampil(siswa.praktik)} | Semester: ${tampil(siswa.semester)}`;
-            document.getElementById("btnUnduhSuratModal").classList.toggle("show", munculTombol);
-            document.getElementById("modalStatus").style.display = "flex";
-        }
+        // function cekStatus(index) {
+        //     const hasilSiswa = dataUtama.filter(s => String(s.nisn).trim() === nisnSaatIni);
+        //     const siswa = hasilSiswa[index];
+        //     if (!siswa) return;
+        //     dataMapelSaatIni = siswa;
+        //     const ket = (siswa.keterangan || "").toString();
+        //     const munculTombol = /tidak wajib ikut semester/i.test(ket);
+        //     document.getElementById("modalMapel").textContent = siswa.mapel || "-";
+        //     const st = document.getElementById("modalStatusText");
+        //     st.textContent = ket.toUpperCase();
+        //     st.className = "status-text " + (/tidak wajib ikut semester/i.test(ket) ? "hijau" : "merah");
+        //     document.getElementById("modalNilai").textContent =
+        //         `Raport: ${tampil(siswa.raport)} | Tugas: ${tampil(siswa.tugas)} | Ulangan: ${tampil(siswa.ulangan)} | Praktik: ${tampil(siswa.praktik)} | Semester: ${tampil(siswa.semester)}`;
+        //     document.getElementById("btnUnduhSuratModal").classList.toggle("show", munculTombol);
+        //     document.getElementById("modalStatus").style.display = "flex";
+        // }
 
+        function cekStatus(index) {
+            cekStatusDariAlert(index);
+        }
         function tutupModal(id) { document.getElementById(id).style.display = "none"; }
 
         function unduhSurat() {
